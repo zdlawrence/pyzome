@@ -69,9 +69,9 @@ def meridional_mean(dat, lat1, lat2):
 
     """
 
-    wgts = np.cos(np.deg2rad(dat.latitude))
+    wgts = np.cos(np.deg2rad(dat.latitude.sel(latitude=slice(lat1,lat2))))
 
-    return dat.weighted(wgts).sel(latitude=slice(lat1, lat2)).mean('latitude')
+    return dat.sel(latitude=slice(lat1, lat2)).weighted(wgts).mean('latitude')
 
 
 def zonal_wave_coeffs(dat, *, waves=None, fftpkg='scipy'):
@@ -332,7 +332,6 @@ def zonal_wave_covariance(dat1, dat2, waves=None, fftpkg='scipy'):
     -----
     * Do not assume the 'longitude' dimension name
     * Check for consistency between dat1 and dat2 and throw errors
-
 
     """
 
