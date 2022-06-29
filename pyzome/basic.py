@@ -1,10 +1,15 @@
+from typing import Union, List
+
 import numpy as np
 import xarray as xr
 import scipy
 import xrft
 
+from .checks import infer_xr_coord_names, check_var_SI_units,
 
-def zonal_mean(dat):
+
+def zonal_mean(dat: Union[xr.DataArray, xr.Dataset],
+               lon: str = "", strict: bool = False):
     r"""Compute the zonal mean.
 
     This is primarily a convenience function that will make other
@@ -15,17 +20,30 @@ def zonal_mean(dat):
     dat : `xarray.DataArray` or `xarray.Dataset`
         data containing a dimension named longitude that spans all 360 degrees
 
+    lon : str, optional
+        The coordinate name of the longitude dimension. If given an empty
+        string (the default), the function tries to infer which coordinate
+        corresponds to the longitude
+
+    strict : bool, optional
+        If True, the function will check whether the longitudes span 360
+        degrees. If False (the default), this check is skipped.
+
     Returns
     -------
     `xarray.DataArray` or `xarray.Dataset`
-        the mean across the longitude dimension
-
-    TO DO
-    -----
-    * Do not assume the 'longitude' dimension name
+        The mean across the longitude dimension
 
     """
-    return dat.mean('longitude')
+
+    if lon is str():
+        coords = infer_xr_coord_names(dat, required=["lon"])
+        lon = coords["lon"]
+
+    if strict is True:
+        span_360 = check_global_lons(dat, lon, enforce=True)
+
+    return dat.mean(lon)
 
 
 def meridional_mean(dat, lat1, lat2):
