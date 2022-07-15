@@ -29,7 +29,8 @@ def zonal_mean(dat: Union[xr.DataArray, xr.Dataset],
 
     strict : bool, optional
         If True, the function will check whether the longitudes span 360
-        degrees. If False (the default), this check is skipped.
+        degrees with regular spacing. If False (the default), this check is
+        skipped.
 
     Returns
     -------
@@ -43,7 +44,7 @@ def zonal_mean(dat: Union[xr.DataArray, xr.Dataset],
         lon_coord = coords["lon"]
 
     if strict is True:
-        span_360 = has_global_regular_lons(dat[lon_coord], enforce=True)
+        has_global_regular_lons(dat[lon_coord], enforce=True)
 
     return dat.mean(lon_coord)
 
@@ -90,7 +91,7 @@ def meridional_mean(dat: Union[xr.DataArray, xr.Dataset],
     min_lat = float(dat[lat_coord].min())
     max_lat = float(dat[lat_coord].max())
     if not ((min_lat <= lat1 <= max_lat) and (min_lat <= lat2 <= max_lat)):
-        msg = f"data only contains lats in range of {min_lat} to {max_lat} "+\
+        msg = f"data only contains lats in range of {min_lat} to {max_lat} " + \
               f"(chose lat1={lat1}, lat2={lat2})"
         raise ValueError(msg)
 
@@ -143,7 +144,7 @@ def zonal_wave_coeffs(dat: xr.DataArray, *,
     if lon_coord == "":
         coords = infer_xr_coord_names(dat, required=["lon"])
         lon_coord = coords["lon"]
-    span_360 = has_global_regular_lons(dat[lon_coord], enforce=True)
+    has_global_regular_lons(dat[lon_coord], enforce=True)
 
     funcs = {
         "scipy": _zonal_wave_coeffs_scipy,
@@ -403,8 +404,7 @@ def zonal_wave_covariance(dat1: xr.DataArray,
     """
 
     # Ensure that dat1 and dat2 are fully consistent
-    tmp = xr.align(dat1, dat2, join="exact", copy=False)
-    tmp = None
+    xr.align(dat1, dat2, join="exact", copy=False)
 
     # If dat1 and dat2 are fully consistent, then this block will cover both
     if lon_coord == "":

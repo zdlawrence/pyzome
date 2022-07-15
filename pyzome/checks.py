@@ -9,16 +9,16 @@ from .exceptions import LongitudeError, CoordinateError, AttrError, UnitError
 
 
 coord_regex = {
-    "lon" : re.compile("lon[a-z]*"),
-    "lat" : re.compile("lat[a-z]*"),
-    "lev" : re.compile("(p?lev|pre?s|isobaric)[a-z]*")
+    "lon": re.compile("lon[a-z]*"),
+    "lat": re.compile("lat[a-z]*"),
+    "lev": re.compile("(p?lev|pre?s|isobaric)[a-z]*")
 }
 
 var_units = {
-    "wind" : ("m s-1", "m/s", "m / s" "meters per second"),
-    "temperature" : ("K", "degK", "Kelvin"),
-    "pressure" : ("Pa", "Pascals"),
-    "vvel" : ("Pa s-1", "Pa/s", "Pa / s", "Pascals per second")
+    "wind": ("m s-1", "m/s", "m / s" "meters per second"),
+    "temperature": ("K", "degK", "Kelvin"),
+    "pressure": ("Pa", "Pascals"),
+    "vvel": ("Pa s-1", "Pa/s", "Pa / s", "Pascals per second")
 }
 
 
@@ -58,7 +58,7 @@ def infer_xr_coord_names(dat: Union[xr.DataArray, xr.Dataset],
             if coord_regex[coord].match(dc.lower()):
                 # Check if more than one coord in dat matches the same pattern
                 if coord in coord_names:
-                    msg = f"Found multiple coordinates in dat matching the "+\
+                    msg = "Found multiple coordinates in dat matching the " + \
                           f"pattern for '{coord}: {coord_names[coord]} & {dc}"
                     raise CoordinateError(msg)
                 else:
@@ -75,14 +75,14 @@ def infer_xr_coord_names(dat: Union[xr.DataArray, xr.Dataset],
 def check_var_SI_units(dat: xr.DataArray, var: str,
                        enforce: bool = False) -> bool:
 
-    if 'units' not in dat.attrs:
-        msg = f'units is not an attribute of the given DataArray'
+    if "units" not in dat.attrs:
+        msg = "units is not an attribute of the given DataArray"
         raise AttrError(msg)
 
     units_SI = dat.units in var_units[var]
     if (enforce is True) and (units_SI is False):
-        msg = f"The units '{dat.units}' do not match SI units for the {var}"+\
-              f" category."
+        msg = f"The units '{dat.units}' do not match SI units for the {var}" + \
+              " category."
         raise UnitError(msg)
 
     return units_SI
