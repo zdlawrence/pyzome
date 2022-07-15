@@ -5,11 +5,13 @@ import xarray as xr
 import scipy
 import xrft
 
-from .checks import infer_xr_coord_names, check_var_SI_units,
+from .checks import (has_global_regular_lons, infer_xr_coord_names,
+                     check_var_SI_units)
 
 
 def zonal_mean(dat: Union[xr.DataArray, xr.Dataset],
-               lon: str = "", strict: bool = False):
+               lon_coord: str = "",
+               strict: bool = False) -> Union[xr.DataArray, xr.Dataset]:
     r"""Compute the zonal mean.
 
     This is primarily a convenience function that will make other
@@ -20,7 +22,7 @@ def zonal_mean(dat: Union[xr.DataArray, xr.Dataset],
     dat : `xarray.DataArray` or `xarray.Dataset`
         data containing a dimension named longitude that spans all 360 degrees
 
-    lon : str, optional
+    lon_coord : str, optional
         The coordinate name of the longitude dimension. If given an empty
         string (the default), the function tries to infer which coordinate
         corresponds to the longitude
@@ -36,24 +38,27 @@ def zonal_mean(dat: Union[xr.DataArray, xr.Dataset],
 
     """
 
-    if lon is str():
+    if lon_coord == "":
         coords = infer_xr_coord_names(dat, required=["lon"])
-        lon = coords["lon"]
+        lon_coord = coords["lon"]
 
     if strict is True:
-        span_360 = check_global_lons(dat, lon, enforce=True)
+        span_360 = has_global_regular_lons(dat[lon_coord], enforce=True)
 
-    return dat.mean(lon)
+    return dat.mean(lon_coord)
 
 
-def meridional_mean(dat, lat1, lat2):
-    r"""Compute the cos(lat) weighted mean of a quantity between two latitudes.
+def meridional_mean(dat: Union[xr.DataArray, xr.Dataset],
+                    lat1: float, lat2: float,
+                    lat_coord: str = "") -> Union[xr.DataArray, xr.Dataset]:
+    r"""Compute the cos(lat) weighted mean of data between two latitudes.
 
     Parameters
     ----------
     dat : `xarray.DataArray` or `xarray.Dataset`
-        data containing a dimension named latitude that spans
-        lat1 and lat2
+        data containing a latitude dimension that spans
+        lat1 and lat2. The cos(lat) weighting assumes that the
+        latitudes are equally spaced.
 
     lat1 : float
         The beginning latitude limit of the band average
@@ -61,38 +66,45 @@ def meridional_mean(dat, lat1, lat2):
     lat2 : float
         The ending latitude limit of the band average
 
+    lat_coord : str, optional
+        The coordinate name of the latitude dimension. If given an empty
+        string (the default), the function tries to infer which coordinate
+        corresponds to the latitude
+
     Returns
     -------
     `xarray.DataArray` or `xarray.Dataset`
         the weighted mean across the latitude dimension limited
         by lat1 and lat2
 
-    Notes
-    -----
-    At present this function uses a slice for limiting the
-    latitudes, and does not check for ordering. This means
-    to get a proper result, you must know the ordering
-    of the latitudes of your data. If they are oriented
-    North to South (such as going from 90N to 90S), then
-    lat1 should be greater than lat2. If they are oriented
-    South to North (such as going from 90S to 90N), then
-    lat1 should be less than lat2.
-
-    TO DO
-    -----
-    * Do not assume the 'latitude' dimension name
-    * Check latitude ordering and throw an error
-      if the latitudes in the data do not contain
-      all/part of the latitude range.
-
     """
 
-    wgts = np.cos(np.deg2rad(dat.latitude.sel(latitude=slice(lat1,lat2))))
+    if lat_coord == "":
+        coords = infer_xr_coord_names(dat, required=["lat"])
+        lat_coord = coords["lat"]
 
-    return dat.sel(latitude=slice(lat1, lat2)).weighted(wgts).mean('latitude')
+    if (lat1 >= lat2):
+        msg = "lat1 must be less than lat2"
+        raise ValueError(msg)
+
+    min_lat = float(dat[lat_coord].min())
+    max_lat = float(dat[lat_coord].max())
+    if not ((min_lat <= lat1 <= max_lat) and (min_lat <= lat2 <= max_lat)):
+        msg = f"data only contains lats in range of {min_lat} to {max_lat} "+\
+              f"(chose lat1={lat1}, lat2={lat2})"
+        raise ValueError(msg)
+
+    lats = dat[lat_coord]
+    ixs = {lat_coord: np.logical_and(lats >= lat1, lats <= lat2)}
+    wgts = np.cos(np.deg2rad(dat[lat_coord].isel(ixs)))
+
+    return dat.isel(ixs).weighted(wgts).mean(lat_coord)
 
 
-def zonal_wave_coeffs(dat, *, waves=None, fftpkg='scipy'):
+def zonal_wave_coeffs(dat: xr.DataArray, *,
+                      waves: Union[None, List] = None,
+                      fftpkg: str = "scipy",
+                      lon_coord: str = "") -> xr.DataArray:
     r"""Calculate the Fourier coefficients of waves in the zonal direction.
 
     This is a primarily a driver function that shifts the data depending
@@ -103,46 +115,52 @@ def zonal_wave_coeffs(dat, *, waves=None, fftpkg='scipy'):
     dat : `xarray.DataArray`
         data containing a dimension named longitude that spans all 360 degrees
     waves : array-like, optional
-        The zonal wavenumbers to maintain in the output. Defaults to None for all.
+        The zonal wavenumbers to maintain in the output. Defaults to None
+        for all.
     fftpkg : string, optional
         String that specifies how to perform the FFT on the data. Options are
-        scipy or xrft. Specifying scipy uses some operations that are memory-eager
-        and leverages scipy.fft.rfft. Specifying xrft should leverage the benefits
-        of xarray/dask for large datasets by using xrft.fft. Defaults to scipy.
+        scipy or xrft. Specifying scipy uses some operations that are
+        memory-eager and leverages scipy.fft.rfft. Specifying xrft should
+        leverage the benefits of xarray/dask for large datasets by using
+        xrft.fft. Defaults to scipy.
+    lon_coord : str, optional
+        The coordinate name of the longitude dimension. If given an empty
+        string (the default), the function tries to infer which coordinate
+        corresponds to the longitude
 
     Returns
     -------
     `xarray.DataArray`
-        Output of the rFFT along the longitude dimension, for specified waves only.
-
-    TO DO
-    -----
-    * Do not assume the 'longitude' dimension name
+        Output of the rFFT along the longitude dimension, for specified
+        waves only.
 
     """
 
-    if fftpkg not in ['scipy', 'xrft']:
-        msg = 'fftpkg keyword arg must be one of scipy or xarray'
+    if fftpkg not in ["scipy", "xrft"]:
+        msg = "fftpkg keyword arg must be one of scipy or xarray"
         raise ValueError(msg)
 
+    if lon_coord == "":
+        coords = infer_xr_coord_names(dat, required=["lon"])
+        lon_coord = coords["lon"]
+    span_360 = has_global_regular_lons(dat[lon_coord], enforce=True)
+
     funcs = {
-        'scipy': _zonal_wave_coeffs_scipy,
-        'xrft': _zonal_wave_coeffs_xrft
+        "scipy": _zonal_wave_coeffs_scipy,
+        "xrft": _zonal_wave_coeffs_xrft
     }
+    fc = funcs[fftpkg](dat, lon_coord)
 
-    nlons = dat.longitude.size
-
-    fc = funcs[fftpkg](dat)
-
-    fc.attrs['nlons'] = nlons
-    fc.attrs['lon0'] = dat.longitude.values[0]
+    fc.attrs["nlons"] = dat[lon_coord].size
+    fc.attrs["lon0"] = dat[lon_coord].values[0]
     if (waves is not None):
         fc = fc.sel(lon_wavenum=waves)
 
     return fc
 
 
-def _zonal_wave_coeffs_scipy(dat):
+def _zonal_wave_coeffs_scipy(dat: xr.DataArray,
+                             lon_coord: str) -> xr.DataArray:
     r"""Calculate the Fourier coefficients of waves in the zonal direction.
 
     Uses scipy.fft.rfft to perform the calculation.
@@ -151,26 +169,24 @@ def _zonal_wave_coeffs_scipy(dat):
     ----------
     dat : `xarray.DataArray`
         data containing a dimension named longitude that spans all 360 degrees
+    lon_coord : string
+        name of the dimension/coordinate corresponding to the longitudes
 
     Returns
     -------
     `xarray.DataArray`
         Output of the rFFT along the longitude dimension.
 
-    TO DO
-    -----
-    * Do not assume the 'longitude' dimension name
-
     """
-    nlons = dat.longitude.size
-    lon_ax = dat.get_axis_num('longitude')
+    nlons = dat[lon_coord].size
+    lon_ax = dat.get_axis_num(lon_coord)
 
     new_dims = list(dat.dims)
-    new_dims[lon_ax] = 'lon_wavenum'
+    new_dims[lon_ax] = "lon_wavenum"
 
     new_coords = dict(dat.coords)
-    new_coords.pop('longitude')
-    new_coords['lon_wavenum'] = np.arange(0, nlons//2 + 1)
+    new_coords.pop(lon_coord)
+    new_coords["lon_wavenum"] = np.arange(0, nlons//2 + 1)
 
     fc = scipy.fft.rfft(dat.values, axis=lon_ax)
     fc = xr.DataArray(fc, coords=new_coords, dims=new_dims)
@@ -178,7 +194,7 @@ def _zonal_wave_coeffs_scipy(dat):
     return fc
 
 
-def _zonal_wave_coeffs_xrft(dat):
+def _zonal_wave_coeffs_xrft(dat: xr.DataArray, lon_coord: str) -> xr.DataArray:
     r"""Calculate the Fourier coefficients of waves in the zonal direction.
 
     Uses xrft.fft to perform the calculation.
@@ -187,43 +203,52 @@ def _zonal_wave_coeffs_xrft(dat):
     ----------
     dat : `xarray.DataArray`
         data containing a dimension named longitude that spans all 360 degrees
+    lon_coord : string
+        name of the dimension/coordinate corresponding to the longitudes
 
     Returns
     -------
     `xarray.DataArray`
         Output of the rFFT along the longitude dimension.
 
-    TO DO
-    -----
-    * Do not assume the 'longitude' dimension name
-
     """
 
-    fc = xrft.fft(dat, dim='longitude', real_dim='longitude',
+    fc = xrft.fft(dat, dim=lon_coord, real_dim=lon_coord,
                   true_phase=False, true_amplitude=False)
 
-    fc = fc.rename({'freq_longitude': 'lon_wavenum'})
-    fc = fc.assign_coords({'lon_wavenum': np.arange(fc.lon_wavenum.size)})
+    fc = fc.rename({f"freq_{lon_coord}": "lon_wavenum"})
+    fc = fc.assign_coords({"lon_wavenum": np.arange(fc.lon_wavenum.size)})
 
     return fc
 
 
-def zonal_wave_ampl_phase(dat, waves=None, phase_deg=False, fftpkg='scipy'):
-    r"""Calculates the amplitudes and relative phases of waves in the zonal direction.
+def zonal_wave_ampl_phase(dat: xr.DataArray,
+                          waves: Union[None, List] = None,
+                          phase_deg: bool = False,
+                          fftpkg: str = "scipy",
+                          lon_coord: str = "") -> xr.DataArray:
+    r"""Calculates the amplitudes and relative phases of waves in the
+    zonal direction.
 
     Parameters
     ----------
     dat : `xarray.DataArray`
         data containing a dimension named longitude that spans all 360 degrees
     waves : array-like, optional
-        The zonal wavenumbers to maintain in the output. Defaults to None for all.
+        The zonal wavenumbers to maintain in the output. Defaults to None
+        for all.
     phase_deg : boolean, optional
         Whether to return the relative phases in radians or degrees.
     fftpkg : string, optional
-        String that specifies how to perform the FFT on the data. Options are
-        scipy or xrft. Specifying scipy uses some operations that are memory-eager
-        and leverages scipy.fft.rfft. Specifying xrft should leverage the benefits
-        of xarray/dask for large datasets by using xrft.fft. Defaults to scipy.
+        String that specifies how to perform the FFT on the data. Options
+        are scipy or xrft. Specifying scipy uses some operations that are
+        memory-eager and leverages scipy.fft.rfft. Specifying xrft should
+        leverage the benefits of xarray/dask for large datasets by using
+        xrft.fft. Defaults to scipy.
+    lon_coord : str, optional
+        The coordinate name of the longitude dimension. If given an empty
+        string (the default), the function tries to infer which coordinate
+        corresponds to the longitude
 
     Returns
     -------
@@ -236,7 +261,12 @@ def zonal_wave_ampl_phase(dat, waves=None, phase_deg=False, fftpkg='scipy'):
 
     """
 
-    fc = zonal_wave_coeffs(dat, waves=waves, fftpkg=fftpkg)
+    if lon_coord == "":
+        coords = infer_xr_coord_names(dat, required=["lon"])
+        lon_coord = coords["lon"]
+
+    fc = zonal_wave_coeffs(dat, waves=waves, fftpkg=fftpkg,
+                           lon_coord=lon_coord)
 
     # where the longitudinal wavenumber is 0, `where' will
     # mask to nan, so np.isfinite will return False in those
@@ -255,20 +285,30 @@ def zonal_wave_ampl_phase(dat, waves=None, phase_deg=False, fftpkg='scipy'):
     return (ampl.astype(dat.dtype), phas.astype(dat.dtype))
 
 
-def zonal_wave_contributions(dat, waves=None, fftpkg='scipy'):
-    r"""Computes contributions of waves with zonal wavenumber k to the input field.
+def zonal_wave_contributions(dat: xr.DataArray,
+                             waves: Union[None, List] = None,
+                             fftpkg: str = "scipy",
+                             lon_coord: str = "") -> xr.DataArray:
+    r"""Computes contributions of waves with zonal wavenumber k to the
+    input field.
 
     Parameters
     ----------
     dat : `xarray.DataArray`
         data containing a dimension named longitude that spans all 360 degrees
     waves : array-like, optional
-        The zonal wavenumbers to maintain in the output. Defaults to None for all.
+        The zonal wavenumbers to maintain in the output. Defaults to None
+        for all.
     fftpkg : string, optional
-        String that specifies how to perform the FFT on the data. Options are
-        scipy or xrft. Specifying scipy uses some operations that are memory-eager
-        and leverages scipy.fft.rfft. Specifying xrft should leverage the benefits
-        of xarray/dask for large datasets by using xrft.fft. Defaults to scipy.
+        String that specifies how to perform the FFT on the data. Options
+        are scipy or xrft. Specifying scipy uses some operations that are
+        memory-eager and leverages scipy.fft.rfft. Specifying xrft should
+        leverage the benefits of xarray/dask for large datasets by using
+        xrft.fft. Defaults to scipy.
+    lon_coord : str, optional
+        The coordinate name of the longitude dimension. If given an empty
+        string (the default), the function tries to infer which coordinate
+        corresponds to the longitude
 
     Returns
     -------
@@ -278,65 +318,79 @@ def zonal_wave_contributions(dat, waves=None, fftpkg='scipy'):
     --------
     zonal_wave_coeffs
 
-    TO DO
-    -----
-    * Do not assume the 'longitude' dimension name
-
     """
-    fc = zonal_wave_coeffs(dat, waves=waves, fftpkg=fftpkg)
+
+    if lon_coord == "":
+        coords = infer_xr_coord_names(dat, required=["lon"])
+        lon_coord = coords["lon"]
+
+    fc = zonal_wave_coeffs(dat, waves=waves, fftpkg=fftpkg,
+                           lon_coord=lon_coord)
 
     if (waves is None):
         waves = fc.lon_wavenum.values
 
     recons = []
-    if (fftpkg == 'scipy'):
+    if (fftpkg == "scipy"):
         new_dims = list(dat.dims)
-        new_dims += ['lon_wavenum']
+        new_dims += ["lon_wavenum"]
         new_coords = dict(dat.coords)
-        new_coords['lon_wavenum'] = waves
+        new_coords["lon_wavenum"] = waves
 
         for k in waves:
             mask = np.isnan(fc.where(fc.lon_wavenum != k))
 
-            kcont = scipy.fft.irfft((fc*mask).values, axis=fc.get_axis_num('lon_wavenum'))
+            kcont = scipy.fft.irfft((fc*mask).values,
+                                    axis=fc.get_axis_num("lon_wavenum"))
             recons.append(kcont[..., np.newaxis])
 
         recons = np.concatenate(recons, axis=-1)
         recons = xr.DataArray(recons, dims=new_dims, coords=new_coords)
 
-    elif (fftpkg == 'xarray'):
-        fc = fc.rename({'lon_wavenum': 'freq_longitude'})
+    # TODO: This block needs some attention (the rename looks unnecessary;
+    # double-check the call signature for xrft.ifft)
+    elif (fftpkg == "xrft"):
+        #fc = fc.rename({"lon_wavenum": "freq_longitude"})
 
         for k in waves:
             mask = np.isnan(fc.where(fc.lon_wavenum != k))
 
-            kcont = xrft.ifft((fc*mask).values, dim='lon_wavenum', real_dim='lon_wavenum')
+            kcont = xrft.ifft(fc*mask, dim="lon_wavenum",
+                              real_dim="lon_wavenum")
             recons.append(kcont)
 
-        recons = xr.concat(recons, dim='lon_wavenum')
-        recons = recons.assign_coords({'lon_wavenum': waves, 'longitude': dat.longitude})
+        recons = xr.concat(recons, dim="lon_wavenum")
+        recons = recons.assign_coords({"lon_wavenum": waves,
+                                       lon_coord: dat[lon_coord]})
 
     return recons.astype(dat.dtype)
 
 
-def zonal_wave_covariance(dat1, dat2, waves=None, fftpkg='scipy'):
-    r"""Calculates the covariance of two fields partititioned into zonal wavenumbers.
+def zonal_wave_covariance(dat1: xr.DataArray,
+                          dat2: xr.DataArray,
+                          waves: Union[None, List] = None,
+                          fftpkg: str = "scipy",
+                          lon_coord: str = "") -> xr.DataArray:
+    r"""Calculates the covariance of two fields partititioned into
+    zonal wavenumbers.
 
     Parameters
     ----------
     dat1 : `xarray.DataArray`
-        field containing a dimension named longitude that spans all 360 degrees.
-        Should have the same shape as dat2.
+        field containing a dimension named longitude that spans all 360
+        degrees. Should have the same shape as dat2.
     dat2 : `xarray.DataArray`
-        another field also containing a dimension named longitude that spans all
-        360 degrees. Should have the same shape as dat1.
+        another field also containing a dimension named longitude that spans
+        all 360 degrees. Should have the same shape as dat1.
     waves : array-like, optional
-        The zonal wavenumbers to maintain in the output. Defaults to None for all.
+        The zonal wavenumbers to maintain in the output. Defaults to None
+        for all.
     fftpkg : string, optional
-        String that specifies how to perform the FFT on the data. Options are
-        scipy or xrft. Specifying scipy uses some operations that are memory-eager
-        and leverages scipy.fft.rfft. Specifying xrft should leverage the benefits
-        of xarray/dask for large datasets by using xrft.fft. Defaults to scipy.
+        String that specifies how to perform the FFT on the data. Options
+        are scipy or xrft. Specifying scipy uses some operations that are
+        memory-eager and leverages scipy.fft.rfft. Specifying xrft should
+        leverage the benefits of xarray/dask for large datasets by using
+        xrft.fft. Defaults to scipy.
 
     Returns
     -------
@@ -346,12 +400,16 @@ def zonal_wave_covariance(dat1, dat2, waves=None, fftpkg='scipy'):
     --------
     zonal_wave_coeffs
 
-    TO DO
-    -----
-    * Do not assume the 'longitude' dimension name
-    * Check for consistency between dat1 and dat2 and throw errors
-
     """
+
+    # Ensure that dat1 and dat2 are fully consistent
+    tmp = xr.align(dat1, dat2, join="exact", copy=False)
+    tmp = None
+
+    # If dat1 and dat2 are fully consistent, then this block will cover both
+    if lon_coord == "":
+        coords = infer_xr_coord_names(dat1, required=["lon"])
+        lon_coord = coords["lon"]
 
     nlons = dat1['longitude'].size
 
