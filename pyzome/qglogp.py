@@ -48,16 +48,17 @@ def merid_grad_qgpv(u, Nsq, lat_coord="", rho_s=RHOREF, H=SCALE_HEIGHT,
         coords = infer_xr_coord_names(u, required=["lat"])
         lat_coord = coords["lat"]
 
-    lats = np.deg2rad(u[lat_coord])
-    cosphi = np.cos(lats)
-    f = 2*Omega*np.sin(lats)
+    r2d = 180./np.pi
+    phi = np.deg2rad(u[lat_coord])
+    cosphi = np.cos(phi)
+    f = 2*Omega*np.sin(phi)
 
     # contribution from change in planetary vorticity
     grad_coriolis = 2*Omega*cosphi
 
     # contribution from meridional wind curvature
-    horiz_curv = (u*cosphi).differentiate(lat_coord, edge_order=2)/(a*cosphi)
-    horiz_curv = -horiz_curv.differentiate(lat_coord, edge_order=2)
+    horiz_curv = r2d*(u*cosphi).differentiate(lat_coord, edge_order=2)/(a*cosphi)
+    horiz_curv = -r2d*horiz_curv.differentiate(lat_coord, edge_order=2)
 
     # contribution from vertical wind curvature
     rho_0 = rho_s * np.exp(-u.z / H)
@@ -94,7 +95,7 @@ def refractive_index(u, q_phi, Nsq, k, phase_speed=0, lat_coord="",
         rho_0 = rho_s * np.exp(-u.z / H)
         d_dz = np.sqrt(rho_0/Nsq).differentiate("z", edge_order=2)
         d2_dz2 = d_dz.differentiate("z", edge_order=2)
-        buoyancy_term = -(f*f/Nsq)*(1/np.sqrt(rho_0))*d2_dz2
+        buoyancy_term = -(f*f/np.sqrt(Nsq))*(1/np.sqrt(rho_0))*d2_dz2
     else:
         buoyancy_term = -f*f / (4*Nsq*H*H)
 
