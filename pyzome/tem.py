@@ -202,10 +202,6 @@ def epflux_vector(u, T, uv, vT, uw, p0=PREF, Rs=GAS_CONST_DRY_AIR,
     ----------
     u : `xarray.DataArray`
         data containing the zonal mean of the zonal wind
-    v : `xarray.DataArray`
-        data containing the zonal mean of the meridional wind
-    w : `xarray.DataArray`
-        data containing the zonal mean of the vertical *pressure* velocity
     T : `xarray.DataArray`
         data containing the zonal mean of the air temperature
     uv : `xarray.DataArray`
@@ -241,7 +237,7 @@ def epflux_vector(u, T, uv, vT, uw, p0=PREF, Rs=GAS_CONST_DRY_AIR,
 
     Notes
     -----
-    u, v, w, T, uv, vT, and uw should generally have the same
+    u, T, uv, vT, and uw should generally have the same
     dimensions. However, as a consequence of the way xarray
     performs broadcasting of arrays, this function will still
     work *as long as all the arrays have at least latitude and
