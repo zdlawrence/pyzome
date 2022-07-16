@@ -17,8 +17,9 @@ coord_regex = {
 var_units = {
     "wind": ("m s-1", "m/s", "m / s" "meters per second"),
     "temperature": ("K", "degK", "Kelvin"),
+    "vvel": ("Pa s-1", "Pa/s", "Pa / s", "Pascals per second"),
     "pressure": ("Pa", "Pascals"),
-    "vvel": ("Pa s-1", "Pa/s", "Pa / s", "Pascals per second")
+    "altitude": ("m", "meters")
 }
 
 
@@ -86,3 +87,27 @@ def check_var_SI_units(dat: xr.DataArray, var: str,
         raise UnitError(msg)
 
     return units_SI
+
+
+def check_for_logp_coord(dat: xr.DataArray, enforce: bool = False) -> bool:
+    ### TO DO: Add tests
+
+    if ("z" not in dat.coords):
+        if (enforce is True):
+            msg = "z is not a coordinate in the data"
+            raise CoordinateError(msg)
+        return False
+
+    if (not {"units", "long_name"} <= dat.z.attrs.keys()):
+        if (enforce is True):
+            msg = "z is missing either units and/or long_name attributes"
+            raise AttrError(msg)
+        return False
+
+    if (dat.z.attrs["long_name"] != "log-pressure altitude"):
+        if (enforce is True):
+            msg = "z must have a long_name = 'log-pressure altitude'"
+            raise AttrError(msg)
+        return False
+
+    return check_var_SI_units(dat.z, "altitude", enforce=enforce)
