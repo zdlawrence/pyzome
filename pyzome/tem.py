@@ -406,7 +406,7 @@ def qg_epflux_vector(T, uv, vT, p0=PREF, Rs=GAS_CONST_DRY_AIR,
     return (F_lat, F_prs)
 
 
-def epflux_div(F_lat, F_prs, accel=False, indiv_contrib=False, a=EARTH_RADIUS):
+def epflux_div(F_lat, F_prs, accel=False, terms=False, a=EARTH_RADIUS):
     r"""Calculate the Eliassen-Palm Flux divergence assuming
     spherical coordinates.
 
@@ -419,19 +419,19 @@ def epflux_div(F_lat, F_prs, accel=False, indiv_contrib=False, a=EARTH_RADIUS):
     accel : bool, optional
         If True, will scale the output by 1 / (a*cos(lat)) so
         that the divergence is in units of m s-2
-    indiv_contrib : bool, optional
+    terms : bool, optional
         If True, the function returns the individual contributions
         to the divergence from the meridional and vertical components
         of the EP-Flux. Defaults to False - the function returns the
-        sum of these contributions.
+        sum of these terms.
     a : float, optional
         Radius of planetary sphere. Defaults to 6.37123e6 m for the Earth.
 
     Returns
     -------
     `xarray.DataArray` or tuple of (`xarray.DataArray`, `xarray.DataArray`)
-        The total EP-Flux divergence (if indiv_contrib=False) or
-        merid_div and verti_div (if indiv_contrib=True)
+        The total EP-Flux divergence (if terms=False) or
+        merid_div and verti_div (if terms=True)
 
     See Also
     --------
@@ -455,7 +455,7 @@ def epflux_div(F_lat, F_prs, accel=False, indiv_contrib=False, a=EARTH_RADIUS):
         merid_div *= scale
         verti_div *= scale
 
-    if (indiv_contrib is True):
+    if (terms is True):
         return (merid_div, verti_div)
     else:
         return merid_div+verti_div
