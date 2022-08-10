@@ -155,7 +155,7 @@ def zonal_wave_coeffs(dat: xr.DataArray, *,
     fc.attrs["nlons"] = dat[lon_coord].size
     fc.attrs["lon0"] = dat[lon_coord].values[0]
     if (waves is not None):
-        fc = fc.sel(lon_wavenum=waves)
+        fc = fc.sel(wavenum_lon=waves)
 
     return fc
 
@@ -183,11 +183,11 @@ def _zonal_wave_coeffs_scipy(dat: xr.DataArray,
     lon_ax = dat.get_axis_num(lon_coord)
 
     new_dims = list(dat.dims)
-    new_dims[lon_ax] = "lon_wavenum"
+    new_dims[lon_ax] = "wavenum_lon"
 
     new_coords = dict(dat.coords)
     new_coords.pop(lon_coord)
-    new_coords["lon_wavenum"] = np.arange(0, nlons//2 + 1)
+    new_coords["wavenum_lon"] = np.arange(0, nlons//2 + 1)
 
     fc = scipy.fft.rfft(dat.values, axis=lon_ax)
     fc = xr.DataArray(fc, coords=new_coords, dims=new_dims)
@@ -217,8 +217,8 @@ def _zonal_wave_coeffs_xrft(dat: xr.DataArray, lon_coord: str) -> xr.DataArray:
     fc = xrft.fft(dat, dim=lon_coord, real_dim=lon_coord,
                   true_phase=False, true_amplitude=False)
 
-    fc = fc.rename({f"freq_{lon_coord}": "lon_wavenum"})
-    fc = fc.assign_coords({"lon_wavenum": np.arange(fc.lon_wavenum.size)})
+    fc = fc.rename({f"freq_{lon_coord}": "wavenum_lon"})
+    fc = fc.assign_coords({"wavenum_lon": np.arange(fc.wavenum_lon.size)})
 
     return fc
 
@@ -278,7 +278,7 @@ def zonal_wave_ampl_phase(dat: xr.DataArray,
     # this is necessary because of the symmetric spectrum,
     # so all other wavenumbers except the 0th need to
     # be multipled by 2 to get the right amplitude
-    mult_mask = np.isfinite(fc.where(fc.lon_wavenum != 0)) + 1
+    mult_mask = np.isfinite(fc.where(fc.wavenum_lon != 0)) + 1
 
     ampl = mult_mask*np.abs(fc) / fc.nlons
     phas = np.angle(fc, deg=phase_deg)
@@ -329,20 +329,20 @@ def zonal_wave_contributions(dat: xr.DataArray,
                            lon_coord=lon_coord)
 
     if (waves is None):
-        waves = fc.lon_wavenum.values
+        waves = fc.wavenum_lon.values
 
     recons = []
     if (fftpkg == "scipy"):
         new_dims = list(dat.dims)
-        new_dims += ["lon_wavenum"]
+        new_dims += ["wavenum_lon"]
         new_coords = dict(dat.coords)
-        new_coords["lon_wavenum"] = waves
+        new_coords["wavenum_lon"] = waves
 
         for k in waves:
-            mask = np.isnan(fc.where(fc.lon_wavenum != k))
+            mask = np.isnan(fc.where(fc.wavenum_lon != k))
 
             kcont = scipy.fft.irfft((fc*mask).values,
-                                    axis=fc.get_axis_num("lon_wavenum"))
+                                    axis=fc.get_axis_num("wavenum_lon"))
             recons.append(kcont[..., np.newaxis])
 
         recons = np.concatenate(recons, axis=-1)
@@ -351,17 +351,17 @@ def zonal_wave_contributions(dat: xr.DataArray,
     # TODO: This block needs some attention (the rename looks unnecessary;
     # double-check the call signature for xrft.ifft)
     elif (fftpkg == "xrft"):
-        #fc = fc.rename({"lon_wavenum": "freq_longitude"})
+        #fc = fc.rename({"wavenum_lon": "freq_longitude"})
 
         for k in waves:
-            mask = np.isnan(fc.where(fc.lon_wavenum != k))
+            mask = np.isnan(fc.where(fc.wavenum_lon != k))
 
-            kcont = xrft.ifft(fc*mask, dim="lon_wavenum",
-                              real_dim="lon_wavenum")
+            kcont = xrft.ifft(fc*mask, dim="wavenum_lon",
+                              real_dim="wavenum_lon")
             recons.append(kcont)
 
-        recons = xr.concat(recons, dim="lon_wavenum")
-        recons = recons.assign_coords({"lon_wavenum": waves,
+        recons = xr.concat(recons, dim="wavenum_lon")
+        recons = recons.assign_coords({"wavenum_lon": waves,
                                        lon_coord: dat[lon_coord]})
 
     return recons.astype(dat.dtype)
@@ -416,7 +416,7 @@ def zonal_wave_covariance(dat1: xr.DataArray,
     fc1 = zonal_wave_coeffs(dat1, waves=waves, fftpkg=fftpkg)
     fc2 = zonal_wave_coeffs(dat2, waves=waves, fftpkg=fftpkg)
 
-    mult_mask = np.isfinite(fc1.where(fc1.lon_wavenum != 0)) + 1
+    mult_mask = np.isfinite(fc1.where(fc1.wavenum_lon != 0)) + 1
     cov = mult_mask*np.real(fc1 * fc2.conj())/(nlons**2)
 
     return cov
