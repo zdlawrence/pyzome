@@ -15,11 +15,22 @@ coord_regex = {
 }
 
 var_units = {
-    "wind": ("m s-1", "m/s", "m / s" "meters per second"),
-    "temperature": ("K", "degK", "Kelvin"),
-    "vvel": ("Pa s-1", "Pa/s", "Pa / s", "Pascals per second"),
+    "altitude": ("m", "meters"),
+    "heatflux": ("K m s-1", "m K s-1", "K*m*s-1", "m*K*s-1",
+                 "K * m * s-1", "m * K * s-1", "K*m/s", "m*K/s",
+                 "K * m / s", "m * K / s", "Kelvin meters per second",
+                 "meters Kelvin per second"),
+    "momentumflux": ("m+2 s-2", "m+2*s-2", "m+2 * s-2", "m+2/s+2", "m+2 / s+2",
+                     "meters squared per second squared"),
+    "vertmomflux" : ("Pa m s-2", "m Pa s-2", "Pa*m*s-2", "m*Pa*s-2",
+                     "Pa * m * s-2", "m * Pa * s-2", "Pa*m/s", "m*Pa/s",
+                     "Pa * m / s", "m * Pa / s",
+                     "Pascal meters per second squared",
+                     "meter Pascals per second squared"),
     "pressure": ("Pa", "Pascals"),
-    "altitude": ("m", "meters")
+    "temperature": ("K", "degK", "Kelvin"),
+    "vvel": ("Pa s-1", "Pa*s-1", "Pa * s-1", "Pa/s", "Pa / s", "Pascals per second"),
+    "wind": ("m s-1", "m*s-1", "m * s-1", "m/s", "m / s", "meters per second"),
 }
 
 
