@@ -14,6 +14,29 @@ from .constants import (
 
 
 def add_logp_altitude(dat, lev_coord="", H=SCALE_HEIGHT, p0=PREF):
+    r"""A convenience function for adding a log-pressure altitude coordinate 
+    to an xarray Dataset or DataArray
+
+    Parameters
+    ----------
+    dat : `xarray.Dataset` or `xarray.DataArray`
+        data containing a pressure coordinate in SI units (Pa)
+    lev_coord : string, optional
+        The name of the pressure coordinate in the input data. Defaults 
+        to an empty string, for which the function will try to infer the 
+        pressure coordinate
+    H : float, optional
+        Scale height used to compute the log-pressure altitude
+    p0 : float, optional
+        Reference pressure for computation of log-pressure altitude. 
+        Defaults to 100000 Pa for Earth.
+
+    Returns
+    -------
+    `xarray.Dataset` or `xarray.DataArray`
+        The input data with an added log-pressure altitude coordinate named 'z'
+
+    """
 
     if lev_coord == "":
         coords = infer_xr_coord_names(dat, required=["lev"])
@@ -29,20 +52,93 @@ def add_logp_altitude(dat, lev_coord="", H=SCALE_HEIGHT, p0=PREF):
 
 def buoyancy_frequency_squared(T, Rs=GAS_CONST_DRY_AIR, Cp=SPEC_HEAT_DRY_AIR,
                                H=SCALE_HEIGHT, p0=PREF):
+    r"""Calculates the buoyancy frequency squared given temperature. 
+
+    Parameters
+    ----------
+    T : `xarray.DataArray`
+        The temperature data in units of Kelvin
+    Rs : float, optional
+        Specific gas constant. Defaults to 287.058 J/kg/K for dry 
+        air of the Earth.
+    Cp : float, optional
+        Specific heat capacity at constant pressure. Defaults to 
+        1004.64 J/kg/K for dry air of the Earth.
+    H : float, optional
+        The scale height used to calculate the log-pressure altitude.
+        Defaults to 7000 m.
+    p0 : float, optional
+        Reference pressure used to calculate the log-pressure altitude. 
+        Defaults to 100000 Pa for Earth.
+
+    Returns
+    -------
+    `xarray.DataArray`
+        The buoyancy frequency squared, in units of s-2.
+
+    """
 
     check_for_logp_coord(T, enforce=True)
+    check_var_SI_units(T, "temperature", enforce=True)
 
     dT_dz = T.differentiate("z", edge_order=2)
     Nsq = (Rs/H)*(dT_dz + (Rs/Cp)*(T/H))
+    Nsq.attrs["units"] = "s-2"
+
     return Nsq
 
 
 def merid_grad_qgpv(u, Nsq, lat_coord="", rho_s=RHOREF, H=SCALE_HEIGHT,
                     Omega=EARTH_ROTA_RATE, a=EARTH_RADIUS, terms=False):
+    
+    r"""Calculates the meridional gradient in the quasi-geostrophic 
+    potential vorticity (QGPV) given the zonal mean zonal winds, and 
+    the squared buoyancy frequency.
+
+    Parameters
+    ----------
+    u : `xarray.DataArray`
+        The zonal mean zonal wind data.
+    Nsq : `xarray.DataArray`
+        The squared buoyancy frequency. Nsq need not have the same dimensions 
+        as u, but it should be consistent with u in the sense that it must be 
+        able to be properly broadcasted when used in computations with u (it is 
+        common to use a reference Nsq that only varies with altitude, or 
+        latitude/altitude)
+    lat_coord : str, optional
+        The coordinate name of the latitude dimension. If given an empty
+        string (the default), the function tries to infer which coordinate
+        corresponds to the latitude
+    rho_s : float, optional
+        The reference density for air at the surface. Defaults to 1.2 kg m-3
+        for density of air on Earth.
+    H : float, optional
+        The scale height used to calculate the log-pressure altitude. 
+        Defaults to 7000 m.
+    Omega : float, optional
+        Planetary rotation rate. Defaults to 7.29211e-5 s-1 for the Earth.
+    a : float, optional
+        Planetary radius. Defaults to 6.37123e6 m for the Earth.
+    terms : bool, optional
+        If False (the default), the function returns the sum of the 3 terms
+        making up the QGPV. If True, the function returns the 3 individual 
+        terms as a tuple containing the contributions from (1) the 
+        change in planetary vorticity with latitude; (2) the horizontal 
+        curvature of the zonal mean zonal wind; and (3) the vertical 
+        curvature of the zonal mean zonal wind. 
+
+    Returns
+    -------
+    `xarray.DataArray` or tuple of DataArrays
+        Depending on the value of the terms keyword argument, either the 
+        full meridional QGPV gradient field, or the individual terms 
+        making it up, in units of s-1.
+
+    """
 
     check_for_logp_coord(u, enforce=True)
     # note that Nsq is *not* checked like u, since a user may want to
-    # use a constant Nsq
+    # use a reference Nsq independent of latitude and/or time
 
     if lat_coord == "":
         coords = infer_xr_coord_names(u, required=["lat"])
@@ -76,6 +172,62 @@ def refractive_index(u, q_phi, Nsq, k, phase_speed=0, lat_coord="",
                      rho_s=RHOREF, H=SCALE_HEIGHT,
                      Omega=EARTH_ROTA_RATE, a=EARTH_RADIUS,
                      cd_approx_term=False, terms=False):
+    r"""Calculates the (squared) refractive index for a given distribution 
+    of zonal mean zonal winds, meridional QGPV gradients, buoyancy frequency 
+    squared, and zonal wavenumber+phase speed. 
+
+    Parameters
+    ----------
+    u : `xarray.DataArray`
+        The zonal mean zonal wind data.
+    q_phi : `xarray.DataArray`
+        The meridional QGPV gradient
+    Nsq : `xarray.DataArray` or float
+        The squared buoyancy frequency. Nsq need not have the same dimensions 
+        as u, but it should be consistent with u and q_phi in the sense that it 
+        must be able to be properly broadcasted when used in computations (it is 
+        common to use a reference Nsq that is constant value or time-mean field)
+    k : int
+        The zonal wavenumber 
+    phase_speed : float, optional
+        The phase speed of the wave, in m s-1.
+    lat_coord : str, optional
+        The coordinate name of the latitude dimension. If given an empty
+        string (the default), the function tries to infer which coordinate
+        corresponds to the latitude
+    rho_s : float, optional
+        The reference density for air at the surface. Defaults to 1.2 kg m-3
+        for density of air on Earth.
+    H : float, optional
+        The scale height used to calculate the log-pressure altitude. 
+        Defaults to 7000 m.
+    Omega : float, optional
+        Planetary rotation rate. Defaults to 7.29211e-5 s-1 for the Earth.
+    a : float, optional
+        Planetary radius. Defaults to 6.37123e6 m for the Earth.
+    cd_approx_term : bool, optional
+        If False (the default), the function uses the standard buoyancy 
+        frequency term involving only Nsq. If True, the function uses 
+        an approximation originally derived by Charney & Drazin involving 
+        the vertical curvature of the buoyancy frequency. See Weinberger 
+        et al., 2021, "The Efficiency of Upward Wave Propagation near the 
+        Tropopause: Importance of the Form of the Refractive Index" for
+        details of this term.
+    terms : bool, optional
+        If False (the default), the function returns the sum of the 3 terms
+        making up the squared refractive index. If True, the function returns 
+        the 3 individual terms as a tuple containing the contributions from 
+        (1) the contribution from the meridional QGPV gradient; (2) the 
+        zonal wavenumber; and (3) the buoyancy.
+
+    Returns
+    -------
+    `xarray.DataArray` or tuple of DataArrays
+        Depending on the value of the terms keyword argument, either the 
+        full refractive index (squared) field, or the individual terms 
+        making it up, in units of m-2.
+
+    """
 
     check_for_logp_coord(u, enforce=True)
     check_for_logp_coord(q_phi, enforce=True)
