@@ -40,7 +40,7 @@ def resid_vel(v, w, T, vT, p0=PREF, Rs=GAS_CONST_DRY_AIR,
         Specific heat capacity at constant pressure for computation of potential
         temperature. Defaults to 1004.64 J/kg/K for dry air of the Earth.
     a : float, optional
-        Radius of planetary sphere. Defaults to 6.37123e6 m for the Earth.
+        Planetary radius. Defaults to 6.37123e6 m for the Earth.
 
     Returns
     -------
@@ -54,16 +54,14 @@ def resid_vel(v, w, T, vT, p0=PREF, Rs=GAS_CONST_DRY_AIR,
 
     Notes
     -----
-    v, w, T, and vT should generally have the same
-    dimensions. However, as a consequence of the way xarray
-    performs broadcasting of arrays, this function will still
-    work *as long as all the arrays have at least latitude and
-    level dimensions*. This has an added benefit that if you
-    desire to compute the contribution of different zonal
-    wavenumbers to the residual circulation, then you can provide
-    the zonal covariances (vT) with an added dimension
-    such as "lon_wavenum" (as is returned by the
-    zonal_wave_covariance function) to get the correct result.
+    v, w, T, and vT should generally have the same dimensions. However, as 
+    a consequence of the way xarray performs broadcasting of arrays, this 
+    function will still work *as long as all the arrays have at least latitude 
+    and level dimensions*. This has an added benefit that if you desire to 
+    compute the contribution of different zonal wavenumbers to the residual 
+    circulation, then you can provide the zonal covariances (vT) with an added 
+    dimension such as "lon_wavenum" (as is returned by the zonal_wave_covariance 
+    function) to get the correct result.
 
     """
 
@@ -123,9 +121,9 @@ def epflux_vector(u, T, uv, vT, uw, p0=PREF, Rs=GAS_CONST_DRY_AIR,
         Specific heat capacity at constant pressure for computation of potential
         temperature. Defaults to 1004.64 J/kg/K for dry air of the Earth.
     a : float, optional
-        Radius of planetary sphere. Defaults to 6.37123e6 m for the Earth.
+        Planetary radius. Defaults to 6.37123e6 m for the Earth.
     Omega : float, optional
-        Rotation rate of planetary body. Defaults to 7.29211e-5 for the Earth.
+        Planetary rotation rate. Defaults to 7.29211e-5 s-1 for the Earth.
 
     Returns
     -------
@@ -139,15 +137,13 @@ def epflux_vector(u, T, uv, vT, uw, p0=PREF, Rs=GAS_CONST_DRY_AIR,
 
     Notes
     -----
-    u, T, uv, vT, and uw should generally have the same
-    dimensions. However, as a consequence of the way xarray
-    performs broadcasting of arrays, this function will still
-    work *as long as all the arrays have at least latitude and
-    level dimensions*. This has an added benefit that if you
-    desire to compute EP Fluxes partitioned into contributions
-    from different zonal wavenumbers, then you can provide the
-    zonal covariances (uv, vT, and uw) with an added dimension
-    such as "lon_wavenum" (as is returned by the
+    u, T, uv, vT, and uw should generally have the same dimensions. However, 
+    as a consequence of the way xarray performs broadcasting of arrays, this 
+    function will still work *as long as all the arrays have at least latitude 
+    and level dimensions*. This has an added benefit that if you desire to 
+    compute EP Fluxes partitioned into contributions from different zonal 
+    wavenumbers, then you can provide the zonal covariances (uv, vT, and uw) 
+    with an added dimension such as "wavenum_lon" (as is returned by the 
     zonal_wave_covariance function) to get the correct result.
 
     """
@@ -205,9 +201,9 @@ def qg_epflux_vector(T, uv, vT, p0=PREF, Rs=GAS_CONST_DRY_AIR,
         Specific heat capacity at constant pressure for computation of potential
         temperature. Defaults to 1004.64 J/kg/K for dry air of the Earth.
     a : float, optional
-        Radius of planetary sphere. Defaults to 6.37123e6 m for the Earth.
+        Planetary radius. Defaults to 6.37123e6 m for the Earth.
     Omega : float, optional
-        Rotation rate of planetary body. Defaults to 7.29211e-5 for the Earth.
+        Planetary rotation rate. Defaults to 7.29211e-5 s-1 for the Earth.
 
     Returns
     -------
@@ -219,15 +215,13 @@ def qg_epflux_vector(T, uv, vT, p0=PREF, Rs=GAS_CONST_DRY_AIR,
     Notes
     -----
     T, uv, and vT should generally have the same dimensions.
-    However, as a consequence of the way xarray
-    performs broadcasting of arrays, this function will still
-    work *as long as all the arrays have at least latitude and
-    level dimensions*. This has an added benefit that if you
-    desire to compute QG-EP Fluxes partitioned into contributions
-    from different zonal wavenumbers, then you can provide the
-    zonal covariances (uv and vT) with an added dimension
-    such as "lon_wavenum" (as is returned by the
-    zonal_wave_covariance function) to get the correct result.
+    However, as a consequence of the way xarray performs broadcasting 
+    of arrays, this function will still work *as long as all the arrays
+    have at least latitude and level dimensions*. This has an added benefit 
+    that if you desire to compute QG-EP Fluxes partitioned into contributions
+    from different zonal wavenumbers, then you can provide the zonal covariances 
+    (uv and vT) with an added dimension such as "wavenum_lon" (as is returned 
+    by the zonal_wave_covariance function) to get the correct result.
 
     """
 
@@ -277,7 +271,7 @@ def epflux_div(F_lat, F_prs, accel=False, terms=False, a=EARTH_RADIUS):
         of the EP-Flux. Defaults to False - the function returns the
         sum of these terms.
     a : float, optional
-        Radius of planetary sphere. Defaults to 6.37123e6 m for the Earth.
+        Planetary radius. Defaults to 6.37123e6 m for the Earth.
 
     Returns
     -------
