@@ -411,7 +411,7 @@ def zonal_wave_covariance(dat1: xr.DataArray,
         coords = infer_xr_coord_names(dat1, required=["lon"])
         lon_coord = coords["lon"]
 
-    nlons = dat1['longitude'].size
+    nlons = dat1[lon_coord].size
 
     fc1 = zonal_wave_coeffs(dat1, waves=waves, fftpkg=fftpkg)
     fc2 = zonal_wave_coeffs(dat2, waves=waves, fftpkg=fftpkg)
