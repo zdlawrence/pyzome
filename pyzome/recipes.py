@@ -1,6 +1,7 @@
 import xarray as xr
 
 from .basic import zonal_mean, zonal_wave_coeffs, zonal_wave_covariance
+from .checks import infer_xr_coord_names
 
 
 def _print_if_true(msg, condition, **kwargs):
@@ -22,7 +23,7 @@ def _print_if_true(msg, condition, **kwargs):
 
 
 def create_zonal_mean_dataset(ds, verbose=False, include_waves=False,
-                              waves=None, fftpkg='scipy'):
+                              waves=None, fftpkg="scipy", lon_coord=""):
     r"""Compiles a "zonal mean dataset".
 
     Given an xarray dataset containing full fields of basic state
@@ -82,6 +83,10 @@ def create_zonal_mean_dataset(ds, verbose=False, include_waves=False,
     Transformed Eulerian Mean momentum budgets.
 
     """
+    
+    if lon_coord == "":
+        coords = infer_xr_coord_names(ds, required=["lon"])
+        lon_coord = coords["lon"]
 
     all_vars = ['u', 'v', 'w', 'T', 'Z']
     cov_pairs = [('u', 'v'), ('v', 'T'), ('u', 'w'), ('w', 'T')]
@@ -185,6 +190,6 @@ def create_zonal_mean_dataset(ds, verbose=False, include_waves=False,
         inter[var].attrs['units'] = units[var]
 
     out_ds = xr.Dataset(inter, coords=out_coords)
-    out_ds.attrs['nlons'] = ds.longitude.size
+    out_ds.attrs['nlons'] = ds[lon_coord].size
 
     return out_ds
