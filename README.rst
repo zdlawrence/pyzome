@@ -31,3 +31,7 @@ Features
 - Quasi-geostrophic diagnostics, such as meridional QGPV gradients and the refractive index
 - A "recipes" framework that simplifies the process of computing these diagnostics
 - More to come!
+
+Acknowledgments
+---------------
+The development of this code was supported by the NWS OSTI Weeks 3-4 Program under NOAA Award NA20NWS4680051.
