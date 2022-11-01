@@ -325,8 +325,7 @@ def zonal_wave_contributions(dat: xr.DataArray,
         coords = infer_xr_coord_names(dat, required=["lon"])
         lon_coord = coords["lon"]
 
-    fc = zonal_wave_coeffs(dat, waves=waves, fftpkg=fftpkg,
-                           lon_coord=lon_coord)
+    fc = zonal_wave_coeffs(dat, fftpkg=fftpkg, lon_coord=lon_coord)
 
     if (waves is None):
         waves = fc.wavenum_lon.values
