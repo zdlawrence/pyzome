@@ -255,3 +255,82 @@ def refractive_index(u, q_phi, Nsq, k, phase_speed=0, lat_coord="",
         return (qgpv_grad_term, wavenum_term, buoyancy_term)
     else:
         return qgpv_grad_term + wavenum_term + buoyancy_term
+
+
+def plumb_wave_activity_flux(psip, Nsq, components=['x','y','z'],
+                            lat_coord="", lon_coord="",
+                            Omega=EARTH_ROTA_RATE, a=EARTH_RADIUS):
+    r"""Calculates the components of the Plumb wave activity flux given the eddy
+    streamfunction and buoyancy frequency squared.
+
+    Parameters
+    ----------
+    psip : `xarray.DataArray`
+        The eddy streamfunction in units of m+2 s-1
+    Nsq : `xarray.DataArray` or float
+        The squared buoyancy frequency. Nsq need not have the same dimensions 
+        as psip, but it should be consistent with psip in the sense that it 
+        must be able to be properly broadcasted when used in computations (it is 
+        common to use a reference Nsq that is constant value or time-mean field)
+    components : list, optional
+        The components of the wave activity flux to compute and return in the 
+        output. 'x' refers to the east-west component, 'y' refers to the north-
+        south component, and 'z' refers to the vertical component.
+    lat_coord : str, optional
+        The coordinate name of the latitude dimension. If given an empty
+        string (the default), the function tries to infer which coordinate
+        corresponds to the latitude
+    lon_coord : str, optional
+        The coordinate name of the longitude dimension. If given an empty string
+        (the default), the function tries to infer which coordinate corresponds
+        to the longitude
+    Omega : float, optional
+        Planetary rotation rate. Defaults to 7.29211e-5 s-1 for the Earth.
+    a : float, optional
+        Planetary radius. Defaults to 6.37123e6 m for the Earth.
+
+    Returns
+    -------
+    list of `xarray.DataArray`s 
+        Returns wave activity flux vector components consistent with the 
+        components kwarg
+
+    """
+  
+    check_for_logp_coord(psip, enforce=True)
+    coords = infer_xr_coord_names(psip, required=["lev"])
+
+    if ('y' in components) and ("lat" not in coords):
+        msg = "A latitude coordinate must be available"
+        raise ValueError(msg)
+    elif (('x' in components) or ('z' in components)) and ("lon" not in coords):
+        msg = "A longitude coordinate must be available"
+        raise ValueError(msg)
+
+    lat_coord = coords["lat"]
+    lon_coord = coords["lon"]
+    r2d = 180./np.pi
+    lats = np.deg2rad(psip[lat_coord])
+    cosphi = np.cos(lats)
+    f = 2*Omega*np.sin(lats)
+
+    p = psip[coords["lev"]]/100000.
+
+    waf = []
+    dpsi_dlam = r2d*psip.differentiate(lon_coord, edge_order=2)
+    if ('x' in components):
+        d2psi_dlam2 = r2d*dpsi_dlam.differentiate(lon_coord, edge_order=2)
+        wafx = (p / (2*a*a*cosphi)) * ((dpsi_dlam)**2 - psip*d2psi_dlam2)
+        waf.append(wafx)
+    if ('y' in components):
+        dpsi_dphi = r2d*psip.differentiate(lat_coord, edge_order=2)
+        d2psi_dphidlam = r2d*dpsi_dphi.differentiate(lon_coord, edge_order=2)
+        wafy = (p/(2*a*a)) * (dpsi_dlam*dpsi_dphi - psip*d2psi_dphidlam)
+        waf.append(wafy)
+    if ('z' in components):
+        dpsi_dz = psip.differentiate("z", edge_order=2)
+        d2psi_dlamdz = dpsi_dlam.differentiate("z", edge_order=2)
+        wafz = (p*f*f/(2*Nsq*a))*(dpsi_dlam*dpsi_dz - psip*d2psi_dlamdz)
+        waf.append(wafz)
+  
+    return waf
