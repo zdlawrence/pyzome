@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyzome"
+authors = [
+    {name = "Zachary D. Lawrence", email = "test@test.com"},
+]
+description = "My package description"
+readme = "README.rst"
+requires-python = ">=3.8"
+keywords = ["meteorology", "physics"]
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Intended Audience :: Science/Research",
+
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "xarray",
+    "xrft",
+]
+dynamic = ["version"]
+
+[project.urls]
+"Source Code" = "https://github.com/zdlawrence/pyzome"
+"Bug Tracker" = "https://github.com/zdlawrence/pyzome/issues"
+
+[tool.setuptools_scm]
+write_to = "pyzome/_version.py"
