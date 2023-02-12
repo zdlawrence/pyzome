@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pyzome"
 authors = [
-    {name = "Zachary D. Lawrence", email = "test@test.com"},
+    {name = "Zachary D. Lawrence", email = "zachary.lawrence@colorado.edu"},
 ]
-description = "My package description"
+description = "A python package for computing zonal mean and related atmospheric diagnostics"
 readme = "README.rst"
 requires-python = ">=3.8"
 keywords = ["meteorology", "physics"]
