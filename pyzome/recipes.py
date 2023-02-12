@@ -78,9 +78,8 @@ def create_zonal_mean_dataset(ds, verbose=False, include_waves=False,
     SPARC Reanalysis Intercomparison Project. This function does *not*
     provide all the same diagnostics as listed in that publication.
     However, if this function is provided with all of u, v, w, and T,
-    it will return all terms necessary from which further diagnostics
-    can be computed to, for instance, perform zonal Eulerian and
-    Transformed Eulerian Mean momentum budgets.
+    it will return all the terms necessary to compute further diagnostics
+    for, e.g., zonal Eulerian and Transformed Eulerian Mean momentum budgets.
 
     """
     
