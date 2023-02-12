@@ -179,7 +179,7 @@ def check_var_SI_units(dat: xr.DataArray, var: str,
 
 
 def check_for_logp_coord(dat: xr.DataArray, enforce: bool = False) -> bool:
-    r""" A function that checks with a log-pressure altitude coordinate
+    r""" A function that checks whether a log-pressure altitude coordinate
     (assumed to be created by pyzome) exists in the given DataArray. Uses
     a combination of units and long_name to check.
 
