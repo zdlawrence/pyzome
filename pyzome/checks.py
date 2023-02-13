@@ -22,7 +22,7 @@ var_units = {
                  "meters Kelvin per second"),
     "momentumflux": ("m+2 s-2", "m+2*s-2", "m+2 * s-2", "m+2/s+2", "m+2 / s+2",
                      "meters squared per second squared"),
-    "vertmomflux" : ("Pa m s-2", "m Pa s-2", "Pa*m*s-2", "m*Pa*s-2",
+    "vertmomflux":  ("Pa m s-2", "m Pa s-2", "Pa*m*s-2", "m*Pa*s-2",
                      "Pa * m * s-2", "m * Pa * s-2", "Pa*m/s", "m*Pa/s",
                      "Pa * m / s", "m * Pa / s",
                      "Pascal meters per second squared",

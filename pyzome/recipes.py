@@ -82,7 +82,7 @@ def create_zonal_mean_dataset(ds, verbose=False, include_waves=False,
     for, e.g., zonal Eulerian and Transformed Eulerian Mean momentum budgets.
 
     """
-    
+
     if lon_coord == "":
         coords = infer_xr_coord_names(ds, required=["lon"])
         lon_coord = coords["lon"]

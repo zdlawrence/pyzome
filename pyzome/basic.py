@@ -5,8 +5,7 @@ import xarray as xr
 import scipy
 import xrft
 
-from .checks import (has_global_regular_lons, infer_xr_coord_names,
-                     check_var_SI_units)
+from .checks import (has_global_regular_lons, infer_xr_coord_names)
 
 
 def zonal_mean(dat: Union[xr.DataArray, xr.Dataset],
@@ -347,11 +346,7 @@ def zonal_wave_contributions(dat: xr.DataArray,
         recons = np.concatenate(recons, axis=-1)
         recons = xr.DataArray(recons, dims=new_dims, coords=new_coords)
 
-    # TODO: This block needs some attention (the rename looks unnecessary;
-    # double-check the call signature for xrft.ifft)
     elif (fftpkg == "xrft"):
-        #fc = fc.rename({"wavenum_lon": "freq_longitude"})
-
         for k in waves:
             mask = np.isnan(fc.where(fc.wavenum_lon != k))
 

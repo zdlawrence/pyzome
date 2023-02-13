@@ -54,18 +54,18 @@ def resid_vel(v, w, T, vT, p0=PREF, Rs=GAS_CONST_DRY_AIR,
 
     Notes
     -----
-    v, w, T, and vT should generally have the same dimensions. However, as 
-    a consequence of the way xarray performs broadcasting of arrays, this 
-    function will still work *as long as all the arrays have at least latitude 
-    and level dimensions*. This has an added benefit that if you desire to 
-    compute the contribution of different zonal wavenumbers to the residual 
-    circulation, then you can provide the zonal covariances (vT) with an added 
-    dimension such as "lon_wavenum" (as is returned by the zonal_wave_covariance 
+    v, w, T, and vT should generally have the same dimensions. However, as
+    a consequence of the way xarray performs broadcasting of arrays, this
+    function will still work *as long as all the arrays have at least latitude
+    and level dimensions*. This has an added benefit that if you desire to
+    compute the contribution of different zonal wavenumbers to the residual
+    circulation, then you can provide the zonal covariances (vT) with an added
+    dimension such as "lon_wavenum" (as is returned by the zonal_wave_covariance
     function) to get the correct result.
 
     """
 
-    coords = infer_xr_coord_names(v, required=["lat","lev"])
+    coords = infer_xr_coord_names(v, required=["lat", "lev"])
     lat = coords["lat"]
     lev = coords["lev"]
 
@@ -137,18 +137,18 @@ def epflux_vector(u, T, uv, vT, uw, p0=PREF, Rs=GAS_CONST_DRY_AIR,
 
     Notes
     -----
-    u, T, uv, vT, and uw should generally have the same dimensions. However, 
-    as a consequence of the way xarray performs broadcasting of arrays, this 
-    function will still work *as long as all the arrays have at least latitude 
-    and level dimensions*. This has an added benefit that if you desire to 
-    compute EP Fluxes partitioned into contributions from different zonal 
-    wavenumbers, then you can provide the zonal covariances (uv, vT, and uw) 
-    with an added dimension such as "wavenum_lon" (as is returned by the 
+    u, T, uv, vT, and uw should generally have the same dimensions. However,
+    as a consequence of the way xarray performs broadcasting of arrays, this
+    function will still work *as long as all the arrays have at least latitude
+    and level dimensions*. This has an added benefit that if you desire to
+    compute EP Fluxes partitioned into contributions from different zonal
+    wavenumbers, then you can provide the zonal covariances (uv, vT, and uw)
+    with an added dimension such as "wavenum_lon" (as is returned by the
     zonal_wave_covariance function) to get the correct result.
 
     """
 
-    coords = infer_xr_coord_names(u, required=["lat","lev"])
+    coords = infer_xr_coord_names(u, required=["lat", "lev"])
     lat = coords["lat"]
     lev = coords["lev"]
 
@@ -214,18 +214,18 @@ def qg_epflux_vector(T, uv, vT, p0=PREF, Rs=GAS_CONST_DRY_AIR,
 
     Notes
     -----
-    T, uv, and vT should generally have the same dimensions.
-    However, as a consequence of the way xarray performs broadcasting 
-    of arrays, this function will still work *as long as all the arrays
-    have at least latitude and level dimensions*. This has an added benefit 
-    that if you desire to compute QG-EP Fluxes partitioned into contributions
-    from different zonal wavenumbers, then you can provide the zonal covariances 
-    (uv and vT) with an added dimension such as "wavenum_lon" (as is returned 
-    by the zonal_wave_covariance function) to get the correct result.
+    T, uv, and vT should generally have the same dimensions. However, as a
+    consequence of the way xarray performs broadcasting of arrays, this function
+    will still work *as long as all the arrays have at least latitude and level
+    dimensions*. This has an added benefit that if you desire to compute QG-EP
+    Fluxes partitioned into contributions from different zonal wavenumbers, then
+    you can provide the zonal covariances (uv and vT) with an added dimension
+    such as "wavenum_lon" (as is returned by the zonal_wave_covariance function)
+    to get the correct result.
 
     """
 
-    coords = infer_xr_coord_names(T, required=["lat","lev"])
+    coords = infer_xr_coord_names(T, required=["lat", "lev"])
     lat = coords["lat"]
     lev = coords["lev"]
 
@@ -286,7 +286,7 @@ def epflux_div(F_lat, F_prs, accel=False, terms=False, a=EARTH_RADIUS):
 
     """
 
-    coords = infer_xr_coord_names(F_lat, required=["lat","lev"])
+    coords = infer_xr_coord_names(F_lat, required=["lat", "lev"])
     lat = coords["lat"]
     lev = coords["lev"]
 
@@ -314,7 +314,7 @@ def epflux_div(F_lat, F_prs, accel=False, terms=False, a=EARTH_RADIUS):
 
 
 ##################################
-""" FUNCTIONS TO BE DEPRECATED """
+#   FUNCTIONS TO BE DEPRECATED
 ##################################
 def resid_vel_ff(v, w, T, p0=PREF, Rs=GAS_CONST_DRY_AIR,
                  Cp=SPEC_HEAT_DRY_AIR, a=EARTH_RADIUS):
@@ -357,7 +357,7 @@ def resid_vel_ff(v, w, T, p0=PREF, Rs=GAS_CONST_DRY_AIR,
 
     """
 
-    msg = "In an upcoming version of pyzome, resid_vel_ff will be removed "+\
+    msg = "In an upcoming version of pyzome, resid_vel_ff will be removed " +\
           "from the tem module, and its functionality absorbed into recipes"
     warnings.warn(msg, DeprecationWarning)
 
@@ -424,8 +424,8 @@ def epflux_vector_ff(u, v, w, T, p0=PREF, Rs=GAS_CONST_DRY_AIR,
 
     """
 
-    msg = "In an upcoming version of pyzome, epflux_vector_ff will be "+\
-          "removed from the tem module, and its functionality absorbed "+\
+    msg = "In an upcoming version of pyzome, epflux_vector_ff will be " +\
+          "removed from the tem module, and its functionality absorbed " +\
           "into recipes"
     warnings.warn(msg, DeprecationWarning)
 
@@ -504,8 +504,8 @@ def qg_epflux_vector_ff(u, v, T, p0=PREF, Rs=GAS_CONST_DRY_AIR,
 
     """
 
-    msg = "In an upcoming version of pyzome, qg_epflux_vector_ff will be "+\
-          "removed from the tem module, and its functionality absorbed "+\
+    msg = "In an upcoming version of pyzome, qg_epflux_vector_ff will be " +\
+          "removed from the tem module, and its functionality absorbed " +\
           "into recipes"
     warnings.warn(msg, DeprecationWarning)
 
