@@ -10,21 +10,21 @@ def _make_regular_coord(
     inclusive: bool = False,
 ) -> xr.DataArray:
     """
-    Generate an xr.DataArray representing a regularly spaced coordinate array 
+    Generate an xr.DataArray representing a regularly spaced coordinate array
 
     Parameters
     ----------
-    low : float | int   
+    low : float | int
         The lower limit of the coordinate
     high : float | int
         The upper limit of the coordinate
     step : float | int
         The step size between each element of the coordinate
     name : str
-        The name of the coordinate  
+        The name of the coordinate
     inclusive : bool, optional
         Whether to include the upper limit in the coordinate
-    
+
     Returns
     -------
     `xarray.DataArray`
@@ -56,7 +56,7 @@ def lat_coord(
         The upper latitude limit, which defaults to 90
     inclusive : bool, optional
         Whether to include the upper latitude limit, which  defaults to True
-    
+
     Returns
     -------
     `xarray.DataArray` of latitudes
@@ -95,7 +95,7 @@ def lon_coord(
         The upper longitude limit, which defaults to 360
     inclusive : bool, optional
         Whether to include the upper longitude limit, which  defaults to False
-    
+
     Returns
     -------
     `xarray.DataArray` of longitudes
@@ -144,7 +144,7 @@ def plev_coord(
         The name of the coordinate, which defaults to "lev"
     units : str, optional
         The units of the coordinate, which defaults to "hPa"
-    
+
     Returns
     -------
     `xarray.DataArray` of pressure levels
@@ -153,6 +153,7 @@ def plev_coord(
     num_elements = levels_per_decade * np.abs(low_lim_exponent - upp_lim_exponent) + 1
     pres = np.logspace(low_lim_exponent, upp_lim_exponent, num_elements)
     pres = xr.DataArray(pres, dims=[name], name=name).assign_coords({name: pres})
+    pres.name = name
     pres.attrs["standard_name"] = "pressure"
     pres.attrs["units"] = units
 
@@ -174,17 +175,19 @@ def time_coord(
     end : str, optional
         The end date, which defaults to "2001-01-01"
     freq : str, optional
-        The frequency of the time coordinate, which defaults to "M" (monthly). 
+        The frequency of the time coordinate, which defaults to "M" (monthly).
         See https://numpy.org/doc/stable/reference/arrays.datetime.html#basic-datetimes
         for more information.
-    
+
     Returns
     -------
     `xarray.DataArray` of times
 
     """
     times = np.arange(start, end, dtype=f"datetime64[{freq}]").astype("datetime64[ns]")
-    times = xr.DataArray(times, dims=["time"], name="time").assign_coords({"time": times})
+    times = xr.DataArray(times, dims=["time"], name="time").assign_coords(
+        {"time": times}
+    )
     times.attrs["standard_name"] = "time"
     times.attrs["units"] = f"days since {start}"
 
@@ -192,9 +195,9 @@ def time_coord(
 
 
 def create_dummy_geo_field(
-    lons: xr.DataArray, 
-    lats: xr.DataArray, 
-    levs: None | xr.DataArray = None, 
+    lons: xr.DataArray,
+    lats: xr.DataArray,
+    levs: None | xr.DataArray = None,
     times: None | xr.DataArray = None,
     name: str = "dummy",
     attrs: dict = {},
@@ -216,7 +219,7 @@ def create_dummy_geo_field(
         The name of the data. Defaults to "dummy"
     attrs : dict, optional
         The attributes of the data. Defaults to an empty dictionary.
-    
+
     Returns
     -------
     `xarray.DataArray` of random data with corresponding geophysical coordinates
@@ -225,18 +228,18 @@ def create_dummy_geo_field(
 
     dat_shape = [lats.size, lons.size]
     coords = [lats, lons]
-    dims = ["lat", "lon"]
-    
-    if (levs is not None):
+    dims = [lats.name, lons.name]
+
+    if levs is not None:
         dat_shape.insert(0, levs.size)
         coords.insert(0, levs)
-        dims.insert(0, "lev")
-    
-    if (times is not None):
+        dims.insert(0, levs.name)
+
+    if times is not None:
         dat_shape.insert(0, times.size)
         coords.insert(0, times)
-        dims.insert(0, "time")
-    
+        dims.insert(0, times.name)
+
     dummy = np.random.normal(size=dat_shape).astype("float32")
     da = xr.DataArray(dummy, coords=coords, dims=dims, name=name)
     da.attrs = attrs
@@ -267,7 +270,7 @@ def create_dummy_geo_dataset(
     times : `xarray.DataArray`, optional
         The times of the data. Defaults to None (times excluded)
     field_attrs : dict, optional
-        The attributes of the data. Defaults to None. If provided, this should be 
+        The attributes of the data. Defaults to None. If provided, this should be
         a nested dictionary with the outer keys corresponding to the field names,
         and inner keys/dicts corresponding to the attributes for each field.
 
