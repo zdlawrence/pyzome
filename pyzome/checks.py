@@ -3,30 +3,54 @@ import re
 import numpy as np
 import xarray as xr
 
-from typing import Union, List
-
 from .exceptions import LongitudeError, CoordinateError, AttrError, UnitError
 
 
 coord_regex = {
     "lon": re.compile("lon[a-z]*"),
     "lat": re.compile("lat[a-z]*"),
-    "lev": re.compile("(p?lev|pre?s|isobaric)[a-z]*")
+    "lev": re.compile("(p?lev|pre?s|isobaric)[a-z]*"),
+    "zonal_wavenum": re.compile("zonal_wavenum[a-z]*"),
 }
 
 var_units = {
     "altitude": ("m", "meters"),
-    "heatflux": ("K m s-1", "m K s-1", "K*m*s-1", "m*K*s-1",
-                 "K * m * s-1", "m * K * s-1", "K*m/s", "m*K/s",
-                 "K * m / s", "m * K / s", "Kelvin meters per second",
-                 "meters Kelvin per second"),
-    "momentumflux": ("m+2 s-2", "m+2*s-2", "m+2 * s-2", "m+2/s+2", "m+2 / s+2",
-                     "meters squared per second squared"),
-    "vertmomflux":  ("Pa m s-2", "m Pa s-2", "Pa*m*s-2", "m*Pa*s-2",
-                     "Pa * m * s-2", "m * Pa * s-2", "Pa*m/s", "m*Pa/s",
-                     "Pa * m / s", "m * Pa / s",
-                     "Pascal meters per second squared",
-                     "meter Pascals per second squared"),
+    "heatflux": (
+        "K m s-1",
+        "m K s-1",
+        "K*m*s-1",
+        "m*K*s-1",
+        "K * m * s-1",
+        "m * K * s-1",
+        "K*m/s",
+        "m*K/s",
+        "K * m / s",
+        "m * K / s",
+        "Kelvin meters per second",
+        "meters Kelvin per second",
+    ),
+    "momentumflux": (
+        "m+2 s-2",
+        "m+2*s-2",
+        "m+2 * s-2",
+        "m+2/s+2",
+        "m+2 / s+2",
+        "meters squared per second squared",
+    ),
+    "vertmomflux": (
+        "Pa m s-2",
+        "m Pa s-2",
+        "Pa*m*s-2",
+        "m*Pa*s-2",
+        "Pa * m * s-2",
+        "m * Pa * s-2",
+        "Pa*m/s",
+        "m*Pa/s",
+        "Pa * m / s",
+        "m * Pa / s",
+        "Pascal meters per second squared",
+        "meter Pascals per second squared",
+    ),
     "pressure": ("Pa", "Pascals"),
     "temperature": ("K", "degK", "Kelvin"),
     "vvel": ("Pa s-1", "Pa*s-1", "Pa * s-1", "Pa/s", "Pa / s", "Pascals per second"),
@@ -34,9 +58,9 @@ var_units = {
 }
 
 
-def has_global_regular_lons(lons: Union[xr.DataArray, np.array],
-                            enforce: bool = False) -> bool:
-
+def has_global_regular_lons(
+    lons: xr.DataArray | np.ndarray, enforce: bool = False
+) -> bool:
     r"""Checks an array of longitudes to ensure it is regularly spaced
     and spans 360 degrees. This is primarily to allow for strict checks
     on data before trying to take zonal means, Fourier transforms, etc.
@@ -68,21 +92,21 @@ def has_global_regular_lons(lons: Union[xr.DataArray, np.array],
     equal_spacing = np.allclose(np.diff(lons), dlon, rtol=0.0, atol=1.0e-3)
 
     # now check that the span+londelta cover 360 degrees
-    full_span = (span + dlon) >= 360.
+    full_span = (span + dlon) >= 360.0
 
     if (enforce is True) and (equal_spacing is False):
-        msg = 'longitudes are not equally spaced'
+        msg = "longitudes are not equally spaced"
         raise LongitudeError(msg)
     elif (enforce is True) and (full_span is False):
-        msg = 'longitudes do not span all 360 degrees'
+        msg = "longitudes do not span all 360 degrees"
         raise LongitudeError(msg)
 
-    return (equal_spacing and full_span)
+    return equal_spacing and full_span
 
 
-def infer_xr_coord_names(dat: Union[xr.DataArray, xr.Dataset],
-                         required: List[str] = []) -> dict:
-
+def infer_xr_coord_names(
+    dat: xr.DataArray | xr.Dataset, required: list[str] = []
+) -> dict:
     r"""A convenience function that identifies commonly used coordinate names
     for gridded earth datasets. This function enables other functions in
     pyzome to perform operations across coordinates without the user having
@@ -118,8 +142,10 @@ def infer_xr_coord_names(dat: Union[xr.DataArray, xr.Dataset],
             if coord_regex[coord].match(dc.lower()):
                 # Check if more than one coord in dat matches the same pattern
                 if coord in coord_names:
-                    msg = "Found multiple coordinates in dat matching the " + \
-                          f"pattern for '{coord}: {coord_names[coord]} & {dc}"
+                    msg = (
+                        "Found multiple coordinates in dat matching the "
+                        + f"pattern for '{coord}: {coord_names[coord]} & {dc}"
+                    )
                     raise CoordinateError(msg)
                 else:
                     coord_names[coord] = dc
@@ -132,8 +158,7 @@ def infer_xr_coord_names(dat: Union[xr.DataArray, xr.Dataset],
     return coord_names
 
 
-def check_var_SI_units(dat: xr.DataArray, var: str,
-                       enforce: bool = False) -> bool:
+def check_var_SI_units(dat: xr.DataArray, var: str, enforce: bool = False) -> bool:
     r"""A function that checks whether the units attribute of a DataArray
     matches SI units for a specific variable category.
 
@@ -171,15 +196,17 @@ def check_var_SI_units(dat: xr.DataArray, var: str,
 
     units_SI = dat.units in var_units[var]
     if (enforce is True) and (units_SI is False):
-        msg = f"The units '{dat.units}' do not match SI units for the {var}" + \
-              " category."
+        msg = (
+            f"The units '{dat.units}' do not match SI units for the {var}"
+            + " category."
+        )
         raise UnitError(msg)
 
     return units_SI
 
 
 def check_for_logp_coord(dat: xr.DataArray, enforce: bool = False) -> bool:
-    r""" A function that checks whether a log-pressure altitude coordinate
+    r"""A function that checks whether a log-pressure altitude coordinate
     (assumed to be created by pyzome) exists in the given DataArray. Uses
     a combination of units and long_name to check.
 
@@ -199,20 +226,20 @@ def check_for_logp_coord(dat: xr.DataArray, enforce: bool = False) -> bool:
 
     """
 
-    if ("z" not in dat.coords):
-        if (enforce is True):
+    if "z" not in dat.coords:
+        if enforce is True:
             msg = "z is not a coordinate in the data"
             raise CoordinateError(msg)
         return False
 
-    if (not {"units", "long_name"} <= dat.z.attrs.keys()):
-        if (enforce is True):
+    if not {"units", "long_name"} <= dat.z.attrs.keys():
+        if enforce is True:
             msg = "z is missing either units and/or long_name attributes"
             raise AttrError(msg)
         return False
 
-    if (dat.z.attrs["long_name"] != "log-pressure altitude"):
-        if (enforce is True):
+    if dat.z.attrs["long_name"] != "log-pressure altitude":
+        if enforce is True:
             msg = "z must have a long_name = 'log-pressure altitude'"
             raise AttrError(msg)
         return False
