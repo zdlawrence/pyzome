@@ -13,7 +13,7 @@ from .mock_data import lon_coord
 def zonal_wave_coeffs(
     dat: xr.DataArray,
     *,
-    waves: None | list[int] = None,
+    waves: None | Iterable[int] = None,
     fftpkg: str = "scipy",
     lon_coord: str = "",
 ) -> xr.DataArray:
@@ -93,7 +93,7 @@ def _zonal_wave_coeffs_scipy(dat: xr.DataArray, lon_coord: str) -> xr.DataArray:
     lon_ax = dat.get_axis_num(lon_coord)
 
     new_dims = list(dat.dims)
-    new_dims[lon_ax] = "zonal_wavenum"
+    new_dims[lon_ax] = "zonal_wavenum" # type: ignore
 
     new_coords = dict(dat.coords)
     new_coords.pop(lon_coord)
@@ -182,7 +182,7 @@ def inflate_zonal_wave_coeffs(
 
     wavenum_ax = fc_subset.get_axis_num(wave_coord)
     output_shape = list(fc_subset.shape)
-    output_shape[wavenum_ax] = expected_wavenums.size
+    output_shape[wavenum_ax] = expected_wavenums.size # type: ignore
     output_coords = dict(fc_subset.coords)
     output_coords[wave_coord] = expected_wavenums
 
@@ -310,7 +310,7 @@ def filter_by_zonal_wave_truncation(
 
     if fftpkg == "scipy":
         new_dims = list(fc.dims)
-        new_dims[wavenum_ax] = lons.name
+        new_dims[wavenum_ax] = lons.name # type: ignore
         new_coords = dict(fc.coords)
         new_coords.pop(wave_coord, None)
         new_coords[lons.name] = lons
@@ -334,7 +334,7 @@ def filter_by_zonal_wave_truncation(
         )
 
     else:
-        msg = "fftpkg must be 'scipy' or 'xrft'"
+        msg = "Invalid fftpkg: must be 'scipy' or 'xrft'"
         raise ValueError(msg)
 
     return filtered
@@ -342,7 +342,7 @@ def filter_by_zonal_wave_truncation(
 
 def zonal_wave_contributions(
     fc: xr.DataArray,
-    waves: None | Iterable[int] = None,
+    waves: Iterable[int],
     fftpkg: str = "scipy",
     wave_coord: str = "",
     lons: None | xr.DataArray = None,
@@ -357,8 +357,7 @@ def zonal_wave_contributions(
         Fourier coefficients as a function of zonal wavenumber, as
         returned by `zonal_wave_coeffs`.
     waves : iterable of int, optional
-        The zonal wavenumbers to maintain in the output. Defaults to None
-        for all wavenumbers.
+        The zonal wavenumbers to maintain in the output.
     fftpkg : string, optional
         String that specifies how to perform the FFT on the data. Options
         are scipy or xrft. Specifying scipy uses some operations that are
@@ -387,9 +386,6 @@ def zonal_wave_contributions(
         coords = infer_xr_coord_names(fc, required=["zonal_wavenum"])
         wave_coord = coords["zonal_wavenum"]
 
-    if waves is None:
-        waves = fc[wave_coord].values
-
     contributions = []
     for wave in waves:
         contributions.append(
@@ -405,11 +401,8 @@ def zonal_wave_contributions(
 
 
 def zonal_wave_covariance(
-    # dat1: xr.DataArray,
-    # dat2: xr.DataArray,
     fc1: xr.DataArray,
     fc2: xr.DataArray,
-    # lon_coord: str = "",
     wave_coord: str = "",
     nlons: int | None = None,
 ) -> xr.DataArray:
@@ -444,10 +437,10 @@ def zonal_wave_covariance(
 
     """
 
-    # Ensure that dat1 and dat2 are fully consistent
+    # Ensure that input DataArrays are fully consistent
     xr.align(fc1, fc2, join="exact", copy=False)
 
-    # If dat1 and dat2 are fully consistent, then this block will cover both
+    # If both DataArrays are fully consistent, then this block will cover both
     if wave_coord == "":
         coords = infer_xr_coord_names(fc1, required=["zonal_wavenum"])
         wave_coord = coords["zonal_wavenum"]
@@ -456,17 +449,10 @@ def zonal_wave_covariance(
         raise ValueError(
             "nlons must either be provided as a kwarg or be in the attrs of fc1 or fc2"
         )
-    elif "nlons" in fc1.attrs:
-        nlons = fc1.attrs["nlons"]
-    elif "nlons" in fc2.attrs:
-        nlons = fc2.attrs["nlons"]
-
-    # nlons = dat1[lon_coord].size
-
-    # fc1 = zonal_wave_coeffs(dat1, waves=waves, lon_coord=lon_coord, fftpkg=fftpkg)
-    # fc2 = zonal_wave_coeffs(dat2, waves=waves, lon_coord=lon_coord, fftpkg=fftpkg)
+    elif nlons is None:
+        nlons = fc1.attrs.get("nlons", fc2.attrs.get("nlons"))
 
     mult_mask = np.isfinite(fc1.where(fc1.zonal_wavenum != 0)) + 1
-    cov = mult_mask * np.real(fc1 * fc2.conj()) / (nlons * nlons)
+    cov = mult_mask * np.real(fc1 * fc2.conj()) / (nlons * nlons) # type: ignore
 
     return cov

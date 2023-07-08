@@ -48,9 +48,10 @@ def add_logp_altitude(
         lev_coord = coords["lev"]
     check_var_SI_units(dat[lev_coord], "pressure", enforce=True)
 
-    z = -H * np.log(dat[lev_coord] / p0)
-    z.attrs["units"] = "m"
-    z.attrs["long_name"] = "log-pressure altitude"
+    z = -H * np.log(dat[lev_coord] / p0) 
+    z.attrs["units"] = "m" # type: ignore
+    z.attrs["long_name"] = "log-pressure altitude" # type: ignore
+    z.attrs["note"] = "added by pyzome" # type: ignore
 
     return dat.assign_coords({"z": z})
 
@@ -94,6 +95,7 @@ def buoyancy_frequency_squared(
     dT_dz = T.differentiate("z", edge_order=2)
     Nsq = (Rs / H) * (dT_dz + (Rs / Cp) * (T / H))
     Nsq.attrs["units"] = "s-2"
+    Nsq.attrs["long_name"] = "buoyancy frequency squared"
 
     return Nsq
 
@@ -151,6 +153,11 @@ def merid_grad_qgpv(
         meridional QGPV gradient field, or the individual terms making it up,
         in units of s-1.
 
+    To Do
+    -----
+    * Unit checks on u and Nsq (if Nsq is a DataArray)
+    * Add units on output terms
+
     """
 
     check_for_logp_coord(u, enforce=True)
@@ -184,7 +191,7 @@ def merid_grad_qgpv(
 
     # return individual terms if requested, otherwise the sum
     if terms is True:
-        return (grad_coriolis, horiz_curv, verti_curv)
+        return (grad_coriolis, horiz_curv, verti_curv) # type: ignore
     else:
         return grad_coriolis + horiz_curv + verti_curv
 
@@ -258,6 +265,11 @@ def refractive_index(
         refractive index (squared) field, or the individual terms making it up,
         in units of m-2.
 
+    To Do
+    -----
+    * Unit checks on u, Nsq (if Nsq is a DataArray), and q_phi
+    * Add units on output terms
+
     """
 
     check_for_logp_coord(u, enforce=True)
@@ -283,7 +295,7 @@ def refractive_index(
         buoyancy_term = -f * f / (4 * Nsq * H * H)
 
     if terms is True:
-        return (qgpv_grad_term, wavenum_term, buoyancy_term)
+        return (qgpv_grad_term, wavenum_term, buoyancy_term) # type: ignore
     else:
         return qgpv_grad_term + wavenum_term + buoyancy_term
 
@@ -331,6 +343,11 @@ def plumb_wave_activity_flux(
     list of `xarray.DataArray`s
         Returns wave activity flux vector components consistent with the
         components kwarg
+    
+    To Do
+    -----
+    * Unit checks on psip and Nsq (if Nsq is a DataArray)
+    * Add units on output terms
 
     """
 

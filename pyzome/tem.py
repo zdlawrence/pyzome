@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
 
+from .checks import infer_xr_coord_names, check_var_SI_units
 from .constants import (
     PREF,
     GAS_CONST_DRY_AIR,
@@ -8,7 +9,6 @@ from .constants import (
     EARTH_RADIUS,
     EARTH_ROTA_RATE,
 )
-from .checks import infer_xr_coord_names, check_var_SI_units
 
 
 def resid_vel(
@@ -83,7 +83,7 @@ def resid_vel(
 
     check_var_SI_units(v[lev], "pressure", enforce=True)
     check_var_SI_units(v, "wind", enforce=True)
-    check_var_SI_units(w, "vvel", enforce=True)
+    check_var_SI_units(w, "prs_vvel", enforce=True)
     check_var_SI_units(T, "temperature", enforce=True)
     check_var_SI_units(vT, "heatflux", enforce=True)
 
@@ -177,7 +177,7 @@ def epflux_vector(
     check_var_SI_units(u[lev], "pressure", enforce=True)
     check_var_SI_units(T, "temperature", enforce=True)
     check_var_SI_units(uv, "momentumflux", enforce=True)
-    check_var_SI_units(uw, "vertmomflux", enforce=True)
+    check_var_SI_units(uw, "prs_vertmomflux", enforce=True)
     check_var_SI_units(vT, "heatflux", enforce=True)
 
     f = 2 * Omega * np.sin(np.deg2rad(u[lat]))
@@ -202,10 +202,10 @@ def epflux_vector(
         )
     )
 
-    F_lat.attrs["units"] = "m+3 s-2"
-    F_prs.attrs["units"] = "Pa m+2 s-2"
+    F_lat.attrs["units"] = "m+3 s-2" # type: ignore
+    F_prs.attrs["units"] = "Pa m+2 s-2" # type: ignore
 
-    return (F_lat, F_prs)
+    return (F_lat, F_prs) # type: ignore
 
 
 def qg_epflux_vector(
@@ -283,10 +283,10 @@ def qg_epflux_vector(
     F_lat = -a * cos_lats * uv
     F_prs = a * cos_lats * f * (vTht / dTht_dp)
 
-    F_lat.attrs["units"] = "m+3 s-2"
-    F_prs.attrs["units"] = "Pa m+2 s-2"
+    F_lat.attrs["units"] = "m+3 s-2" # type: ignore
+    F_prs.attrs["units"] = "Pa m+2 s-2" # type: ignore
 
-    return (F_lat, F_prs)
+    return (F_lat, F_prs) # type: ignore
 
 
 def epflux_div(
@@ -349,15 +349,15 @@ def epflux_div(
 
     if accel is True:
         merid_div *= scale
-        merid_div.attrs["units"] = "m s-2"
+        merid_div.attrs["units"] = "m s-2" # type: ignore
         verti_div *= scale
-        verti_div.attrs["units"] = "m s-2"
+        verti_div.attrs["units"] = "m s-2" # type: ignore
     else:
-        merid_div.attrs["units"] = "m+2 s-2"
-        verti_div.attrs["units"] = "m+2 s-2"
+        merid_div.attrs["units"] = "m+2 s-2" # type: ignore
+        verti_div.attrs["units"] = "m+2 s-2" # type: ignore
 
     if terms is True:
-        return (merid_div, verti_div)
+        return (merid_div, verti_div) # type: ignore
 
     with xr.set_options(keep_attrs=True):
-        return merid_div + verti_div
+        return merid_div + verti_div # type: ignore

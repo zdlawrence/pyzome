@@ -10,12 +10,12 @@ coord_regex = {
     "lon": re.compile("lon[a-z]*"),
     "lat": re.compile("lat[a-z]*"),
     "lev": re.compile("(p?lev|pre?s|isobaric)[a-z]*"),
-    "zonal_wavenum": re.compile("zonal_wavenum[a-z]*"),
+    "zonal_wavenum": re.compile("(zonal_wavenum|wavenum_lon|lon_wavenum)[a-z]*"),
 }
 
 var_units = {
-    "altitude": ("m", "meters"),
-    "heatflux": (
+    "altitude": {"m", "meters"},
+    "heatflux": {
         "K m s-1",
         "m K s-1",
         "K*m*s-1",
@@ -28,16 +28,16 @@ var_units = {
         "m * K / s",
         "Kelvin meters per second",
         "meters Kelvin per second",
-    ),
-    "momentumflux": (
+    },
+    "momentumflux": {
         "m+2 s-2",
         "m+2*s-2",
         "m+2 * s-2",
         "m+2/s+2",
         "m+2 / s+2",
         "meters squared per second squared",
-    ),
-    "vertmomflux": (
+    },
+    "prs_vertmomflux": {
         "Pa m s-2",
         "m Pa s-2",
         "Pa*m*s-2",
@@ -50,11 +50,11 @@ var_units = {
         "m * Pa / s",
         "Pascal meters per second squared",
         "meter Pascals per second squared",
-    ),
-    "pressure": ("Pa", "Pascals"),
-    "temperature": ("K", "degK", "Kelvin"),
-    "vvel": ("Pa s-1", "Pa*s-1", "Pa * s-1", "Pa/s", "Pa / s", "Pascals per second"),
-    "wind": ("m s-1", "m*s-1", "m * s-1", "m/s", "m / s", "meters per second"),
+    },
+    "pressure": {"Pa", "Pascals"},
+    "temperature": {"K", "degK", "Kelvin"},
+    "prs_vvel": {"Pa s-1", "Pa*s-1", "Pa * s-1", "Pa/s", "Pa / s", "Pascals per second"},
+    "wind": {"m s-1", "m*s-1", "m * s-1", "m/s", "m / s", "meters per second"},
 }
 
 
@@ -139,7 +139,7 @@ def infer_xr_coord_names(
     dat_coords = list(dat.coords)
     for dc in dat_coords:
         for coord in coord_regex:
-            if coord_regex[coord].match(dc.lower()):
+            if coord_regex[coord].match(dc.lower()): # type: ignore
                 # Check if more than one coord in dat matches the same pattern
                 if coord in coord_names:
                     msg = (
@@ -232,15 +232,21 @@ def check_for_logp_coord(dat: xr.DataArray, enforce: bool = False) -> bool:
             raise CoordinateError(msg)
         return False
 
-    if not {"units", "long_name"} <= dat.z.attrs.keys():
+    if not {"units", "long_name", "note"} <= dat.z.attrs.keys():
         if enforce is True:
-            msg = "z is missing either units and/or long_name attributes"
+            msg = "z is missing at least one of the required attributes 'units', 'long_name', and/or 'note'"
             raise AttrError(msg)
         return False
 
     if dat.z.attrs["long_name"] != "log-pressure altitude":
         if enforce is True:
             msg = "z must have a long_name = 'log-pressure altitude'"
+            raise AttrError(msg)
+        return False
+
+    if dat.z.attrs["note"] != "added by pyzome":
+        if enforce is True:
+            msg = "z must have a note = 'added by pyzome'"
             raise AttrError(msg)
         return False
 
