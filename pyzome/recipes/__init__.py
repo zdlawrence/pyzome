@@ -1,1 +1,1 @@
-from . import zmd
+from .zmd import *

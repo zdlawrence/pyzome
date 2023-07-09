@@ -49,13 +49,14 @@ UNITS = {
     "T_k_imag": "K",
 }
 
+
 def create_zonal_mean_dataset(
-    ds: xr.Dataset, 
-    verbose: bool=False, 
-    include_waves: bool=False, 
-    waves: None | Iterable[int]=None, 
-    fftpkg: str="scipy", 
-    lon_coord: str=""
+    ds: xr.Dataset,
+    verbose: bool = False,
+    include_waves: bool = False,
+    waves: None | Iterable[int] = None,
+    fftpkg: str = "scipy",
+    lon_coord: str = "",
 ):
     r"""Compiles a "zonal mean dataset".
 
@@ -70,11 +71,11 @@ def create_zonal_mean_dataset(
         longitude dimensions) of basic state variables. This function
         currently assumes specific names and units:
 
-        'u' = zonal wind component in m/s
-        'v' = meridional wind component in m/s
-        'w' = vertical pressure velocity in Pa/s
-        'T' = temperature in K
-        'Z' = geopotential height in m
+        - 'u' = zonal wind component in m/s
+        - 'v' = meridional wind component in m/s
+        - 'w' = vertical pressure velocity in Pa/s
+        - 'T' = temperature in K
+        - 'Z' = geopotential height in m
 
         If your data names, dimensions, and/or units do not conform to these
         restrictions, please change beforehand. Dimensions and names can
@@ -87,7 +88,7 @@ def create_zonal_mean_dataset(
         Whether to print out progress information as the function proceeds.
         Defaults to False.
     include_waves : bool, optional
-        Whether to include diagnostics as a function of zonal wavenumber such 
+        Whether to include diagnostics as a function of zonal wavenumber such
         as eddy covariances and fourier coefficients. Defaults to False.
     waves : array-like, optional
         The specific zonal wavenumbers to maintain in the output. This
@@ -126,11 +127,15 @@ def create_zonal_mean_dataset(
     valid_vars = ("u", "v", "w", "T", "Z")
     valid_covs = (("u", "v"), ("v", "T"), ("u", "w"), ("w", "T"))
     wave_vars = ("T", "Z")
-    
+
     vars_available = [v for v in ds.data_vars if v in valid_vars]
     if len(vars_available) == 0:
         raise ValueError("No valid fields found in provided dataset")
-    cov_pairs = [(v1, v2) for v1, v2 in valid_covs if v1 in vars_available and v2 in vars_available]
+    cov_pairs = [
+        (v1, v2)
+        for v1, v2 in valid_covs
+        if v1 in vars_available and v2 in vars_available
+    ]
 
     inter = {}
     out_coords = None
@@ -144,7 +149,7 @@ def create_zonal_mean_dataset(
         inter[f"{var}"] = zm
         inter[f"{var}ed"] = ed
         out_coords = inter[f"{var}"].coords
-    
+
     # another for-loop is not strictly necessary, but it makes the
     # logging messages a bit cleaner
     if include_waves is True:

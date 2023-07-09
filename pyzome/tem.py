@@ -56,13 +56,8 @@ def resid_vel(
 
     Returns
     -------
-    Tuple of two `xarray.DataArray`
-        Tuple contains (v_res, w_res), the meridional and vertical
-        residual velocity components.
-
-    See Also
-    --------
-    resid_vel_ff
+    residual velocities: tuple of two `xarray.DataArray`
+        The meridional and vertical residual velocity components.
 
     Notes
     -----
@@ -149,13 +144,8 @@ def epflux_vector(
 
     Returns
     -------
-    Tuple of two `xarray.DataArray`
-        Tuple contains (F_lat, F_prs), the meridional and vertical
-        components of the EP-Flux.
-
-    See Also
-    --------
-    epflux_vector_ff
+    ep_flux: tuple of two `xarray.DataArray`
+        The meridional and vertical components of the EP-Flux (F_lat, F_prs)
 
     Notes
     -----
@@ -165,7 +155,7 @@ def epflux_vector(
     and level dimensions*. This has an added benefit that if you desire to
     compute EP Fluxes partitioned into contributions from different zonal
     wavenumbers, then you can provide the zonal covariances (uv, vT, and uw)
-    with an added dimension such as "wavenum_lon" (as is returned by the
+    with an added dimension such as "zonal_wavenum" (as is returned by the
     zonal_wave_covariance function) to get the correct result.
 
     """
@@ -202,10 +192,10 @@ def epflux_vector(
         )
     )
 
-    F_lat.attrs["units"] = "m+3 s-2" # type: ignore
-    F_prs.attrs["units"] = "Pa m+2 s-2" # type: ignore
+    F_lat.attrs["units"] = "m+3 s-2"  # type: ignore
+    F_prs.attrs["units"] = "Pa m+2 s-2"  # type: ignore
 
-    return (F_lat, F_prs) # type: ignore
+    return (F_lat, F_prs)  # type: ignore
 
 
 def qg_epflux_vector(
@@ -245,9 +235,9 @@ def qg_epflux_vector(
 
     Returns
     -------
-    Tuple of two `xarray.DataArray`
-        Tuple contains (F_lat, F_prs), the meridional and vertical
-        components of the quasi-geostrophic EP-Flux.
+    qg_ep_flux: tuple of two `xarray.DataArray`
+        The meridional and vertical components of the quasi-geostrophic EP-Flux
+        (F_lat, F_prs).
 
     Notes
     -----
@@ -257,7 +247,7 @@ def qg_epflux_vector(
     dimensions*. This has an added benefit that if you desire to compute QG-EP
     Fluxes partitioned into contributions from different zonal wavenumbers, then
     you can provide the zonal covariances (uv and vT) with an added dimension
-    such as "wavenum_lon" (as is returned by the zonal_wave_covariance function)
+    such as "zonal_wavenum" (as is returned by the zonal_wave_covariance function)
     to get the correct result.
 
     """
@@ -283,10 +273,10 @@ def qg_epflux_vector(
     F_lat = -a * cos_lats * uv
     F_prs = a * cos_lats * f * (vTht / dTht_dp)
 
-    F_lat.attrs["units"] = "m+3 s-2" # type: ignore
-    F_prs.attrs["units"] = "Pa m+2 s-2" # type: ignore
+    F_lat.attrs["units"] = "m+3 s-2"  # type: ignore
+    F_prs.attrs["units"] = "Pa m+2 s-2"  # type: ignore
 
-    return (F_lat, F_prs) # type: ignore
+    return (F_lat, F_prs)  # type: ignore
 
 
 def epflux_div(
@@ -318,16 +308,16 @@ def epflux_div(
 
     Returns
     -------
-    `xarray.DataArray` or tuple of (`xarray.DataArray`, `xarray.DataArray`)
-        The total EP-Flux divergence (if terms=False) or
-        merid_div and verti_div (if terms=True)
+    epflux_divergence: `xarray.DataArray` or tuple of (`xarray.DataArray`, `xarray.DataArray`)
+        The total EP-Flux divergence or
+        the individual terms from the meridional and vertical divergence (if terms=True)
 
     See Also
     --------
     epflux_vector
-    qg_epflux
+    qg_epflux_vector
 
-    To Do
+    Todo
     -----
     * Add unit checks on input EP-Flux components
 
@@ -349,15 +339,15 @@ def epflux_div(
 
     if accel is True:
         merid_div *= scale
-        merid_div.attrs["units"] = "m s-2" # type: ignore
+        merid_div.attrs["units"] = "m s-2"  # type: ignore
         verti_div *= scale
-        verti_div.attrs["units"] = "m s-2" # type: ignore
+        verti_div.attrs["units"] = "m s-2"  # type: ignore
     else:
-        merid_div.attrs["units"] = "m+2 s-2" # type: ignore
-        verti_div.attrs["units"] = "m+2 s-2" # type: ignore
+        merid_div.attrs["units"] = "m+2 s-2"  # type: ignore
+        verti_div.attrs["units"] = "m+2 s-2"  # type: ignore
 
     if terms is True:
-        return (merid_div, verti_div) # type: ignore
+        return (merid_div, verti_div)  # type: ignore
 
     with xr.set_options(keep_attrs=True):
-        return merid_div + verti_div # type: ignore
+        return merid_div + verti_div  # type: ignore

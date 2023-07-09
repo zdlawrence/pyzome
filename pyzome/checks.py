@@ -77,7 +77,8 @@ def has_global_regular_lons(
 
     Returns
     -------
-    `bool` True if the lons span 360 degrees and regularly spaced, False if not
+    bool
+        True if the lons span 360 degrees and regularly spaced, False if not
 
     """
 
@@ -127,7 +128,8 @@ def infer_xr_coord_names(
 
     Returns
     -------
-    coord_names: dict of string keys and values, with the keys being the
+    coord_names: dict 
+        string keys and values, with the keys being the
         coordinate name category (e.g., lat, lon), and the values being the
         actual coordinate name in the given xarray data. E.g,
         {"lat":"latitude"} is a possible return value in which latitude was
@@ -186,7 +188,8 @@ def check_var_SI_units(dat: xr.DataArray, var: str, enforce: bool = False) -> bo
 
     Returns
     -------
-    `bool` True if an SI units match is found, False otherwise.
+    bool
+        True if an SI units match is found, False otherwise.
 
     """
 
@@ -222,7 +225,8 @@ def check_for_logp_coord(dat: xr.DataArray, enforce: bool = False) -> bool:
 
     Returns
     -------
-    `bool` True if log-pressure altitude coordinate is found. False otherwise.
+    bool
+        True if log-pressure altitude coordinate is found. False otherwise.
 
     """
 

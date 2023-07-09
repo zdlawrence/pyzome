@@ -71,7 +71,9 @@ def lat_coord(
 
     Returns
     -------
-    `xarray.DataArray` of latitudes
+    latitudes: `xarray.DataArray` 
+        Regularly spaced latitudes with the given resolution 
+        (and name/limits, if given)
 
     """
     if (abs(left_lim) > 90) or (abs(right_lim) > 90):
@@ -112,7 +114,9 @@ def lon_coord(
 
     Returns
     -------
-    `xarray.DataArray` of longitudes
+    longitudes: `xarray.DataArray` 
+        Regularly spaced longitudes with the given resolution
+        (and name/limits, if given)
 
     """
 
@@ -163,7 +167,9 @@ def plev_coord(
 
     Returns
     -------
-    `xarray.DataArray` of pressure levels
+    pressures: `xarray.DataArray`
+        Pressure-like coordinate with logarithmic spacing having the given
+        number of levels per decade (and name/limits/units, if given)
 
     """
 
@@ -209,7 +215,8 @@ def time_coord(
 
     Returns
     -------
-    `xarray.DataArray` of times
+    times: `xarray.DataArray`
+        Time-like coordinate with the given start/end dates and frequency
 
     """
 
@@ -254,7 +261,8 @@ def create_dummy_geo_field(
 
     Returns
     -------
-    `xarray.DataArray` of random data with corresponding geophysical coordinates
+    dummy_data: `xarray.DataArray` 
+        Random data with corresponding geophysical coordinates
 
     """
 
@@ -305,6 +313,11 @@ def create_dummy_geo_dataset(
         The attributes of the data. Defaults to None. If provided, this should be
         a nested dictionary with the outer keys corresponding to the field names,
         and inner keys/dicts corresponding to the attributes for each field.
+    
+    Returns
+    -------
+    dummy_dataset: `xarray.Dataset` 
+        Dataset with fields having random data matching the given geophysical coordinates
 
     """
     if field_attrs is not None and len(field_attrs) != len(field_names):

@@ -5,14 +5,15 @@ from .checks import has_global_regular_lons, infer_xr_coord_names
 
 
 def zonal_mean(
-    dat: xr.DataArray | xr.Dataset, 
-    lon_coord: str = "", 
+    dat: xr.DataArray | xr.Dataset,
+    lon_coord: str = "",
     strict: bool = False,
 ) -> xr.DataArray | xr.Dataset:
     r"""Compute the zonal mean.
 
     This is primarily a convenience function that will make other
-    code more explicit/readable.
+    code more explicit/readable. This function is imported at the
+    top level of the package by default.
 
     Parameters
     ----------
@@ -31,7 +32,7 @@ def zonal_mean(
 
     Returns
     -------
-    `xarray.DataArray` or `xarray.Dataset`
+    zonal average: `xarray.DataArray` or `xarray.Dataset`
         The mean across the longitude dimension
 
     """
@@ -47,12 +48,14 @@ def zonal_mean(
 
 
 def meridional_mean(
-    dat: xr.DataArray | xr.Dataset, 
-    lat1: float, 
-    lat2: float, 
+    dat: xr.DataArray | xr.Dataset,
+    lat1: float,
+    lat2: float,
     lat_coord: str = "",
 ) -> xr.DataArray | xr.Dataset:
     r"""Compute the cos(lat) weighted mean of data between two latitudes.
+
+    This function is imported at the top level of the package by default.
 
     Parameters
     ----------
@@ -76,7 +79,7 @@ def meridional_mean(
 
     Returns
     -------
-    `xarray.DataArray` or `xarray.Dataset`
+    meridional average: `xarray.DataArray` or `xarray.Dataset`
         the weighted mean across the latitude dimension limited
         by lat1 and lat2
 
@@ -103,4 +106,4 @@ def meridional_mean(
     ixs = {lat_coord: np.logical_and(lats >= lat1, lats <= lat2)}
     wgts = np.cos(np.deg2rad(dat[lat_coord].isel(ixs)))
 
-    return dat.isel(ixs).weighted(wgts).mean(lat_coord) # type: ignore
+    return dat.isel(ixs).weighted(wgts).mean(lat_coord)  # type: ignore
