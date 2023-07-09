@@ -17,15 +17,14 @@ def zonal_wave_coeffs(
     fftpkg: str = "scipy",
     lon_coord: str = "",
 ) -> xr.DataArray:
-    r"""Calculate the Fourier coefficients of waves in the zonal direction.
+    r"""Compute the Fourier transform of data along the zonal direction.
 
-    This is a primarily a driver function that shifts the data depending
-    on the specified fftpkg.
+    This function is imported at the top level of the package by default.
 
     Parameters
     ----------
     dat : `xarray.DataArray`
-        data containing a dimension named longitude that spans all 360 degrees
+        input data containing a longitude dimension that spans all 360 degrees
     waves : array-like, optional
         The zonal wavenumbers to maintain in the output. Defaults to None
         for all.
@@ -43,7 +42,7 @@ def zonal_wave_coeffs(
     Returns
     -------
     `xarray.DataArray`
-        Output of the rFFT along the longitude dimension, for specified
+        Output of an rFFT along the longitude dimension, for specified
         waves only. The output is a complex-valued DataArray containing
         at least the `zonal_wavenum` dimension, with attributes `nlons`
         and `lon0` that specify the number of longitudes and the starting
@@ -93,7 +92,7 @@ def _zonal_wave_coeffs_scipy(dat: xr.DataArray, lon_coord: str) -> xr.DataArray:
     lon_ax = dat.get_axis_num(lon_coord)
 
     new_dims = list(dat.dims)
-    new_dims[lon_ax] = "zonal_wavenum" # type: ignore
+    new_dims[lon_ax] = "zonal_wavenum"  # type: ignore
 
     new_coords = dict(dat.coords)
     new_coords.pop(lon_coord)
@@ -180,21 +179,7 @@ def inflate_zonal_wave_coeffs(
         msg = "input DataArray wavenumbers are not a subset of the expected wavenumbers based on the 'nlons' attribute"
         raise ValueError(msg)
 
-    wavenum_ax = fc_subset.get_axis_num(wave_coord)
-    output_shape = list(fc_subset.shape)
-    output_shape[wavenum_ax] = expected_wavenums.size # type: ignore
-    output_coords = dict(fc_subset.coords)
-    output_coords[wave_coord] = expected_wavenums
-
-    inflated = xr.DataArray(
-        np.zeros(output_shape, dtype=fc_subset.dtype),
-        coords=output_coords,
-        dims=fc_subset.dims,
-    )
-
-    with xr.set_options(arithmetic_join="left"):
-        inflated = inflated + fc_subset
-    return inflated.fillna(0j)
+    return fc_subset.reindex({wave_coord: expected_wavenums}, fill_value=0j)  # type: ignore
 
 
 def zonal_wave_ampl_phase(
@@ -219,8 +204,8 @@ def zonal_wave_ampl_phase(
 
     Returns
     -------
-    Tuple of two `xarray.DataArray`
-        Tuple contains (amplitudes, phases)
+    tuple of two `xarray.DataArray`
+        Contains the amplitudes and phases for the input field zonal waves.
 
     See Also
     --------
@@ -281,10 +266,10 @@ def filter_by_zonal_wave_truncation(
         The coordinate name of the wavenumber dimension. If given an empty
         string (the default), the function tries to infer which coordinate
         corresponds to the wavenumbers
-    lons : `xarray.DataArray`, optional
+    lons: `xarray.DataArray`, optional
         The longitude coordinate of the input field. If not given, the
-        function will attempt to infer the coordinate from the input
-        DataArray.
+        function will attempt to reconstruct the coordinate from the input
+        Fourier coefficients, by looking for 'nlons' and 'lon0' attributes.
 
     """
     if wave_coord == "":
@@ -310,7 +295,7 @@ def filter_by_zonal_wave_truncation(
 
     if fftpkg == "scipy":
         new_dims = list(fc.dims)
-        new_dims[wavenum_ax] = lons.name # type: ignore
+        new_dims[wavenum_ax] = lons.name  # type: ignore
         new_coords = dict(fc.coords)
         new_coords.pop(wave_coord, None)
         new_coords[lons.name] = lons
@@ -368,6 +353,10 @@ def zonal_wave_contributions(
         The coordinate name of the wavenumber dimension. If given an empty
         string (the default), the function tries to infer which coordinate
         corresponds to the wavenumbers
+    lons: `xarray.DataArray`, optional
+        The longitude coordinate of the input field. If not given, the
+        function will attempt to reconstruct the coordinate from the input
+        Fourier coefficients, by looking for 'nlons' and 'lon0' attributes.
 
     Returns
     -------
@@ -411,21 +400,19 @@ def zonal_wave_covariance(
 
     Parameters
     ----------
-    dat1 : `xarray.DataArray`
-        field containing a dimension named longitude that spans all 360
-        degrees. Should have the same shape as dat2.
-    dat2 : `xarray.DataArray`
-        another field also containing a dimension named longitude that spans
-        all 360 degrees. Should have the same shape as dat1.
-    waves : array-like, optional
-        The zonal wavenumbers to maintain in the output. Defaults to None
-        for all.
-    fftpkg : string, optional
-        String that specifies how to perform the FFT on the data. Options
-        are scipy or xrft. Specifying scipy uses some operations that are
-        memory-eager and leverages scipy.fft.rfft. Specifying xrft should
-        leverage the benefits of xarray/dask for large datasets by using
-        xrft.fft. Defaults to scipy.
+    fc1 : `xarray.DataArray`
+        The zonal Fourier coefficients of the first field, as returned by
+        `zonal_wave_coeffs`.
+    fc2 : `xarray.DataArray`
+        The zonal Fourier coefficients of the second field, as returned by
+        `zonal_wave_coeffs`.
+    wave_coord : str optional
+        The coordinate name of the wavenumber dimension. If given an empty
+        string (the default), the function tries to infer which coordinate
+        corresponds to the wavenumbers.
+    nlons: int, optional
+        The number of longitudes in the original data. If not provided, the
+        function will try to find this in the attrs of fc1 or fc2.
 
     Returns
     -------
@@ -453,6 +440,6 @@ def zonal_wave_covariance(
         nlons = fc1.attrs.get("nlons", fc2.attrs.get("nlons"))
 
     mult_mask = np.isfinite(fc1.where(fc1.zonal_wavenum != 0)) + 1
-    cov = mult_mask * np.real(fc1 * fc2.conj()) / (nlons * nlons) # type: ignore
+    cov = mult_mask * np.real(fc1 * fc2.conj()) / (nlons * nlons)  # type: ignore
 
     return cov

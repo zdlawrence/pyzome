@@ -55,6 +55,20 @@ def test_zonal_wave_coeffs_xrft():
     np.testing.assert_allclose(da_zonal_wave_coeffs.values, numpy_fft[:, 1:5])
 
 
+def test_zonal_wave_coeffs_scipy_xrft_equal():
+    """Test that zonal wave coeffs give same results with scipy and xrft"""
+    test_lons = lon_coord(2.0)
+    da = create_dummy_geo_field(test_lons, lat_coord(3.0))
+    da_fc_xrft = zonal_wave_coeffs(da, fftpkg="xrft").astype("complex64")
+    da_fc_scipy = zonal_wave_coeffs(da, fftpkg="scipy")
+
+    assert da_fc_xrft.shape == da_fc_scipy.shape
+    assert da_fc_xrft.dims == da_fc_scipy.dims
+    assert da_fc_xrft.lon0 == da_fc_scipy.lon0
+    assert da_fc_xrft.nlons == da_fc_scipy.nlons
+    np.testing.assert_allclose(da_fc_xrft.values, da_fc_scipy.values, atol=1.0e-5)
+
+
 def test_zonal_wave_coeffs_unknown_fftpkg():
     """Test that zonal wave coeffs fails with unknown fftpkg"""
     da = create_dummy_geo_field(lon_coord(10), lat_coord(10))
@@ -68,19 +82,23 @@ def test_inflate_zonal_wave_coeffs():
     da = create_dummy_geo_field(lon_coord(2.0), lat_coord(3.0))
 
     da_fc = zonal_wave_coeffs(da, fftpkg="scipy", waves=[1, 2, 3, 4])
-
     da_fc_inflated = inflate_zonal_wave_coeffs(da_fc)
     assert da_fc_inflated.shape == (61, 91)
     assert np.allclose(da_fc_inflated.sel(zonal_wavenum=[1, 2, 3, 4]), da_fc)
+
+    # Test the case when non-consecutive wavenums are initially kept
+    da_fc = zonal_wave_coeffs(da, fftpkg="scipy", waves=[1, 5, 10, 20])
+    da_fc_inflated = inflate_zonal_wave_coeffs(da_fc)
+    assert np.allclose(da_fc_inflated.sel(zonal_wavenum=[1, 5, 10, 20]), da_fc)
 
 
 def test_inflate_zonal_wave_coeffs_missing_nlons():
     """Test that inflate_zonal_wave_coeffs fails without nlons attribute"""
     da = create_dummy_geo_field(lon_coord(2.0), lat_coord(3.0))
-    
+
     da_fc = zonal_wave_coeffs(da, fftpkg="scipy", waves=[1, 2, 3, 4])
     _ = da_fc.attrs.pop("nlons")
-    
+
     with pytest.raises(KeyError) as e:
         da_fc_inflated = inflate_zonal_wave_coeffs(da_fc)
     assert "input DataArray must have an 'nlons' attribute" in str(e.value)
@@ -135,9 +153,10 @@ def test_zonal_wave_ampl_phase():
     assert np.allclose(ampl.sel(zonal_wavenum=wave_num, lat=0), wave_ampl)
     assert np.allclose(phase.sel(zonal_wavenum=wave_num, lat=0), wave_phase)
 
+
 def test_zonal_wave_ampl_phase_missing_nlons():
     da = create_dummy_geo_field(lon_coord(2.0), lat_coord(3.0))
-    da_fc = zonal_wave_coeffs(da, fftpkg="scipy", waves=[1,2,3])
+    da_fc = zonal_wave_coeffs(da, fftpkg="scipy", waves=[1, 2, 3])
 
     with pytest.raises(KeyError) as e:
         _ = da_fc.attrs.pop("nlons")
@@ -227,12 +246,12 @@ def test_filter_by_zonal_wave_truncation_no_attrs():
 
     with pytest.raises(KeyError) as e:
         _ = da_fc.attrs.pop("lon0")
-        da_filt = filter_by_zonal_wave_truncation(da_fc, [1,2,3])
+        da_filt = filter_by_zonal_wave_truncation(da_fc, [1, 2, 3])
     assert "input DataArray must have a 'lon0' attribute" in str(e.value)
 
     with pytest.raises(KeyError) as e:
         _ = da_fc.attrs.pop("nlons")
-        da_filt = filter_by_zonal_wave_truncation(da_fc, [1,2,3])
+        da_filt = filter_by_zonal_wave_truncation(da_fc, [1, 2, 3])
     assert "input DataArray must have an 'nlons' attribute" in str(e.value)
 
 
@@ -257,7 +276,7 @@ def test_filter_by_zonal_wave_truncation_fftpkg_fails():
     da_fc = zonal_wave_coeffs(da, fftpkg="scipy")
 
     with pytest.raises(ValueError) as e:
-        da_filt = filter_by_zonal_wave_truncation(da_fc, [1,2,3], fftpkg="foo")
+        da_filt = filter_by_zonal_wave_truncation(da_fc, [1, 2, 3], fftpkg="foo")
     assert "Invalid fftpkg: must be" in str(e.value)
 
 
@@ -336,4 +355,7 @@ def test_zonal_wave_covariance_no_nlons():
         _ = da_fc2.attrs.pop("nlons")
 
         zon_cov = zonal_wave_covariance(da_fc1, da_fc2)
-    assert "nlons must either be provided as a kwarg or be in the attrs of fc1 or fc2" in str(e.value)
+    assert (
+        "nlons must either be provided as a kwarg or be in the attrs of fc1 or fc2"
+        in str(e.value)
+    )
