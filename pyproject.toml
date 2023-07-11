@@ -4,10 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyzome"
+version = "0.0.3"
 authors = [
     {name = "Zachary D. Lawrence", email = "zachary.lawrence@colorado.edu"},
 ]
-description = "A python package for computing zonal mean and related atmospheric diagnostics"
+description = "A collection of tools for computing zonal mean and other related atmospheric circulation diagnostics"
 readme = "README.rst"
 requires-python = ">=3.8"
 keywords = ["meteorology", "physics"]
@@ -26,11 +27,7 @@ dependencies = [
     "xarray",
     "xrft",
 ]
-dynamic = ["version"]
 
 [project.urls]
 "Source Code" = "https://github.com/zdlawrence/pyzome"
 "Bug Tracker" = "https://github.com/zdlawrence/pyzome/issues"
-
-[tool.setuptools_scm]
-write_to = "pyzome/_version.py"
