@@ -2,12 +2,15 @@
 pyzome
 ======
 
-..
-        image:: https://img.shields.io/travis/zdlawrence/pyzome.svg
-        :target: https://travis-ci.org/zdlawrence/pyzome
-..
-        image:: https://img.shields.io/pypi/v/pyzome.svg
-        :target: https://pypi.python.org/pypi/pyzome
+.. image:: https://github.com/zdlawrence/pyzome/actions/workflows/ci_tests.yml/badge.svg
+    :target: https://github.com/zdlawrence/pyzome/actions/workflows/ci_tests.yml
+
+.. image:: https://codecov.io/github/zdlawrence/pyzome/branch/main/graph/badge.svg?token=J5CT0XW4FD
+    :target: https://codecov.io/github/zdlawrence/pyzome
+
+.. image:: https://readthedocs.org/projects/pyzome/badge/?version=latest
+    :target: https://pyzome.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 
 pyzome (rhymes with "rhizome") is a Python package for atmospheric sciences. It 
@@ -20,9 +23,6 @@ pyzome is in an early stage and currently under active development. While much o
 the core functionality is in place, the API (e.g., function names and call 
 signatures) is still subject to change.
 
-..
-        * Free software: 3-clause BSD license
-        * Documentation: (COMING SOON!) https://zdlawrence.github.io/pyzome.
 
 Features
 --------
