@@ -23,6 +23,12 @@ pyzome is in an early stage and currently under active development. While much o
 the core functionality is in place, the API (e.g., function names and call 
 signatures) is still subject to change.
 
+Install
+-------
+pyzome is available on PyPI and can be installed with pip::
+
+    pip install pyzome
+
 
 Features
 --------
