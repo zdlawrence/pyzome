@@ -10,10 +10,9 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-    
+
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
-   build: html
    configuration: docs/conf.py
    fail_on_warning: false
 
