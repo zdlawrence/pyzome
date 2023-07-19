@@ -94,7 +94,7 @@ def has_global_regular_lons(
     equal_spacing = np.allclose(np.diff(lons), dlon, rtol=0.0, atol=1.0e-3)
 
     # now check that the span+londelta cover 360 degrees
-    full_span = (span + dlon) >= 360.0
+    full_span = np.allclose(span + dlon, 360.0, rtol=0.0, atol=1.0e-3)
 
     if (enforce is True) and (equal_spacing is False):
         msg = "longitudes are not equally spaced"
