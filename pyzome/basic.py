@@ -1,16 +1,32 @@
 from __future__ import annotations
+from typing import overload
 
 import numpy as np
 import xarray as xr
 
 from .checks import has_global_regular_lons, infer_xr_coord_names
 
-
+@overload
 def zonal_mean(
-    dat: xr.DataArray | xr.Dataset,
+    dat: xr.Dataset,
     lon_coord: str = "",
     strict: bool = False,
-) -> xr.DataArray | xr.Dataset:
+) -> xr.Dataset:
+    ...
+
+@overload
+def zonal_mean(
+    dat: xr.DataArray,
+    lon_coord: str = "",
+    strict: bool = False,
+) -> xr.DataArray:
+    ...
+
+def zonal_mean(
+    dat,
+    lon_coord: str = "",
+    strict: bool = False,
+):
     r"""Compute the zonal mean.
 
     This is primarily a convenience function that will make other
@@ -49,12 +65,33 @@ def zonal_mean(
     return dat.mean(lon_coord)
 
 
+@overload
 def meridional_mean(
-    dat: xr.DataArray | xr.Dataset,
+    dat: xr.Dataset,
     lat1: float,
     lat2: float,
     lat_coord: str = "",
-) -> xr.DataArray | xr.Dataset:
+    strict: bool = False,
+) -> xr.Dataset:
+    ...
+
+@overload
+def meridional_mean(
+    dat: xr.DataArray,
+    lat1: float,
+    lat2: float,
+    lat_coord: str = "",
+    strict: bool = False,
+) -> xr.DataArray:
+    ...
+
+def meridional_mean(
+    dat,
+    lat1: float,
+    lat2: float,
+    lat_coord: str = "",
+    strict: bool = False,
+):
     r"""Compute the cos(lat) weighted mean of data between two latitudes.
 
     This function is imported at the top level of the package by default.
@@ -78,6 +115,11 @@ def meridional_mean(
         The coordinate name of the latitude dimension. If given an empty
         string (the default), the function tries to infer which coordinate
         corresponds to the latitude
+    
+    strict : bool, optional
+        If True, the function will check whether the latitudes on `dat`
+        span `lat1` and `lat2` inclusive. If False (the default), this 
+        check is skipped.
 
     Returns
     -------
@@ -97,7 +139,7 @@ def meridional_mean(
 
     min_lat = float(dat[lat_coord].min())
     max_lat = float(dat[lat_coord].max())
-    if not ((min_lat <= lat1 <= max_lat) and (min_lat <= lat2 <= max_lat)):
+    if strict and not ((min_lat <= lat1 <= max_lat) and (min_lat <= lat2 <= max_lat)):
         msg = (
             f"data only contains lats in range of {min_lat} to {max_lat} "
             + f"(chose lat1={lat1}, lat2={lat2})"
