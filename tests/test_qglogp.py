@@ -33,7 +33,7 @@ def test_add_logp_altitude():
     assert da.z.attrs["units"] == "m"
     assert da.z.attrs["long_name"] == "log-pressure altitude"
     assert da.z.attrs["note"] == "added by pyzome"
-    np.testing.assert_allclose(da.z.values, -SCALE_HEIGHT*np.log(da.lev.values/PREF))
+    np.testing.assert_allclose(da.z.values, -SCALE_HEIGHT*np.log(da.plev.values/PREF))
 
 
 def test_buoyancy_frequency_squared():

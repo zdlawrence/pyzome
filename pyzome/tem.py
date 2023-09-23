@@ -74,9 +74,9 @@ def resid_vel(
 
     """
 
-    coords = infer_xr_coord_names(v, required=["lat", "lev"])
+    coords = infer_xr_coord_names(v, required=["lat", "plev"])
     lat = coords["lat"]
-    lev = coords["lev"]
+    lev = coords["plev"]
 
     check_var_SI_units(v[lev], "pressure", enforce=True)
     check_var_SI_units(v, "wind", enforce=True)
@@ -162,9 +162,9 @@ def epflux_vector(
 
     """
 
-    coords = infer_xr_coord_names(u, required=["lat", "lev"])
+    coords = infer_xr_coord_names(u, required=["lat", "plev"])
     lat = coords["lat"]
-    lev = coords["lev"]
+    lev = coords["plev"]
 
     check_var_SI_units(u[lev], "pressure", enforce=True)
     check_var_SI_units(T, "temperature", enforce=True)
@@ -254,9 +254,9 @@ def qg_epflux_vector(
 
     """
 
-    coords = infer_xr_coord_names(T, required=["lat", "lev"])
+    coords = infer_xr_coord_names(T, required=["lat", "plev"])
     lat = coords["lat"]
-    lev = coords["lev"]
+    lev = coords["plev"]
 
     check_var_SI_units(T[lev], "pressure", enforce=True)
     check_var_SI_units(T, "temperature", enforce=True)
@@ -325,9 +325,9 @@ def epflux_div(
 
     """
 
-    coords = infer_xr_coord_names(F_lat, required=["lat", "lev"])
+    coords = infer_xr_coord_names(F_lat, required=["lat", "plev"])
     lat = coords["lat"]
-    lev = coords["lev"]
+    lev = coords["plev"]
 
     check_var_SI_units(F_prs[lev], "pressure", enforce=True)
 

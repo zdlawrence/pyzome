@@ -138,7 +138,7 @@ def test_invalid_longitude_limits():
 def test_plev_default_values():
     """Test that plev_coord creates a pressure-like coordinate correctly for default values"""
     da = plev_coord(3)
-    assert da.name == "lev"
+    assert da.name == "plev"
     np.testing.assert_allclose(da.values, np.logspace(3, 0, 3 * 3 + 1))
     assert da.attrs["standard_name"] == "pressure"
     assert da.attrs["units"] == "hPa"
@@ -220,12 +220,12 @@ def test_create_dummy_geo_field():
     )
 
     # Check the dimensions
-    assert da.dims == ("time", "lev", "lat", "lon")
+    assert da.dims == ("time", "plev", "lat", "lon")
 
     # Check the sizes
     assert da.sizes == {
         "time": times.size,
-        "lev": levs.size,
+        "plev": levs.size,
         "lat": lats.size,
         "lon": lons.size,
     }
@@ -262,10 +262,10 @@ def test_create_dummy_geo_field_invalid_arguments():
     lats = lat_coord(10)
 
     with pytest.raises(AttributeError):
-        create_dummy_geo_field(invalid_dataarray, lats)
+        create_dummy_geo_field(invalid_dataarray, lats) # type: ignore
 
     with pytest.raises(AttributeError):
-        create_dummy_geo_field(lons, invalid_dataarray)
+        create_dummy_geo_field(lons, invalid_dataarray) # type: ignore
 
 
 def test_create_dummy_geo_dataset():
@@ -274,10 +274,10 @@ def test_create_dummy_geo_dataset():
     lats = lat_coord(10)
     levs = plev_coord(5)
     times = time_coord()
-    field_names = ["temp", "precip", "wind"]
+    field_names = ["temp", "humidity", "wind"]
     field_attrs = {
         "temp": {"units": "K"},
-        "precip": {"units": "mm/hr"},
+        "humidity": {"units": "kg / kg"},
         "wind": {"units": "m/s"},
     }
 
@@ -291,12 +291,12 @@ def test_create_dummy_geo_dataset():
         assert ds[name].attrs == field_attrs[name]
 
         # Check the dimensions
-        assert ds[name].dims == ("time", "lev", "lat", "lon")
+        assert ds[name].dims == ("time", "plev", "lat", "lon")
 
         # Check the sizes
         assert ds[name].sizes == {
             "time": times.size,
-            "lev": levs.size,
+            "plev": levs.size,
             "lat": lats.size,
             "lon": lons.size,
         }
@@ -310,10 +310,10 @@ def test_create_dummy_geo_dataset_invalid_arguments():
     field_names = ["temp"]
 
     with pytest.raises(AttributeError):
-        create_dummy_geo_dataset(field_names, invalid_dataarray, lats)
+        create_dummy_geo_dataset(field_names, invalid_dataarray, lats) # type: ignore
 
     with pytest.raises(AttributeError):
-        create_dummy_geo_dataset(field_names, lons, invalid_dataarray)
+        create_dummy_geo_dataset(field_names, lons, invalid_dataarray) # type: ignore
 
     mismatched_field_attrs = {"temp": {"units": "K"}, "missing_field": {}}
     with pytest.raises(ValueError) as e:

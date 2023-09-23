@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 import re
+from typing import Iterable
 
 import numpy as np
 import xarray as xr
@@ -10,7 +12,7 @@ from .exceptions import LongitudeError, CoordinateError, AttrError, UnitError
 coord_regex = {
     "lon": re.compile("lon[a-z]*"),
     "lat": re.compile("lat[a-z]*"),
-    "lev": re.compile("(p?lev|pre?s|isobaric)[a-z]*"),
+    "plev": re.compile("(p?lev|pre?s|isobaric)[a-z]*"),
     "zonal_wavenum": re.compile("(zonal_wavenum|wavenum_lon|lon_wavenum)[a-z]*"),
 }
 
@@ -107,8 +109,8 @@ def has_global_regular_lons(
 
 
 def infer_xr_coord_names(
-    dat: xr.DataArray | xr.Dataset, required: list[str] = []
-) -> dict:
+    dat: xr.DataArray | xr.Dataset, required: Iterable[str] = []
+) -> dict[str, str]:
     r"""A convenience function that identifies commonly used coordinate names
     for gridded earth datasets. This function enables other functions in
     pyzome to perform operations across coordinates without the user having
@@ -119,7 +121,7 @@ def infer_xr_coord_names(
     Parameters
     ----------
     dat : `xarray.DataArray` or `xr.Dataset`
-        The data containing the coordinates of lat, lon, lev, etc.
+        The data containing the coordinates of lat, lon, plev, etc.
 
     required: List of strings, optional
         If this kwarg is defined, this function will throw errors if it is

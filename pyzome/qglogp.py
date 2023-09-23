@@ -17,7 +17,7 @@ from .constants import (
 
 def add_logp_altitude(
     dat: xr.Dataset | xr.DataArray,
-    lev_coord: str = "",
+    plev_coord: str = "",
     H: float = SCALE_HEIGHT,
     p0: float = PREF,
 ) -> xr.Dataset | xr.DataArray:
@@ -28,7 +28,7 @@ def add_logp_altitude(
     ----------
     dat : `xarray.Dataset` or `xarray.DataArray`
         data containing a pressure coordinate in SI units (Pa)
-    lev_coord : string, optional
+    plev_coord : string, optional
         The name of the pressure coordinate in the input data. Defaults
         to an empty string, for which the function will try to infer the
         pressure coordinate
@@ -45,12 +45,12 @@ def add_logp_altitude(
 
     """
 
-    if lev_coord == "":
-        coords = infer_xr_coord_names(dat, required=["lev"])
-        lev_coord = coords["lev"]
-    check_var_SI_units(dat[lev_coord], "pressure", enforce=True)
+    if plev_coord == "":
+        coords = infer_xr_coord_names(dat, required=["plev"])
+        plev_coord = coords["plev"]
+    check_var_SI_units(dat[plev_coord], "pressure", enforce=True)
 
-    z = -H * np.log(dat[lev_coord] / p0)
+    z = -H * np.log(dat[plev_coord] / p0)
     z.attrs["units"] = "m"  # type: ignore
     z.attrs["long_name"] = "log-pressure altitude"  # type: ignore
     z.attrs["note"] = "added by pyzome"  # type: ignore
@@ -354,7 +354,7 @@ def plumb_wave_activity_flux(
     """
 
     check_for_logp_coord(psip, enforce=True)
-    coords = infer_xr_coord_names(psip, required=["lev"])
+    coords = infer_xr_coord_names(psip, required=["plev"])
 
     if ("y" in components) and ("lat" not in coords):
         msg = "A latitude coordinate must be available"
@@ -370,7 +370,7 @@ def plumb_wave_activity_flux(
     cosphi = np.cos(lats)
     f = 2 * Omega * np.sin(lats)
 
-    p = psip[coords["lev"]] / 100000.0
+    p = psip[coords["plev"]] / 100000.0
 
     waf = []
     dpsi_dlam = r2d * psip.differentiate(lon_coord, edge_order=2)

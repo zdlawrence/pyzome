@@ -145,7 +145,7 @@ def plev_coord(
     levels_per_decade: int,
     left_lim_exponent: int = 3,
     right_lim_exponent: int = 0,
-    name: str = "lev",
+    name: str = "plev",
     units: str = "hPa",
 ) -> xr.DataArray:
     """

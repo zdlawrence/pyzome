@@ -51,17 +51,16 @@ def test_infer_xr_coord_names():
     """Test that standard coordinates can be inferred/detected"""
 
     da = create_dummy_geo_field(lon_coord(10), lat_coord(10), plev_coord(3))
-    mapper = {"lev": "lev", "lat": "lat", "lon": "lon"}
-    assert infer_xr_coord_names(da, required=["lev", "lat", "lon"]) == mapper
+    mapper = {"plev": "plev", "lat": "lat", "lon": "lon"}
+    assert infer_xr_coord_names(da, required=["plev", "lat", "lon"]) == mapper
 
     da = create_dummy_geo_field(
         lon_coord(10, name="longitude"),
         lat_coord(10, name="latitude"),
         plev_coord(3, name="level"),
     )
-    print(da)
-    mapper = {"lev": "level", "lat": "latitude", "lon": "longitude"}
-    assert infer_xr_coord_names(da, required=["lev", "lat", "lon"]) == mapper
+    mapper = {"plev": "level", "lat": "latitude", "lon": "longitude"}
+    assert infer_xr_coord_names(da, required=["plev", "lat", "lon"]) == mapper
 
 
 def test_infer_multiple_coords_fail():
@@ -127,7 +126,7 @@ def test_check_for_logp_coord():
         check_for_logp_coord(da, enforce=True)
     assert "z is not a coordinate in the data" in str(e.value) 
 
-    da = da.assign_coords({"z": np.log(da.lev)})
+    da = da.assign_coords({"z": np.log(da.plev)})
     assert check_for_logp_coord(da) is False
     with pytest.raises(AttrError) as e:
         check_for_logp_coord(da, enforce=True)
