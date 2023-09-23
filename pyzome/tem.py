@@ -176,25 +176,14 @@ def epflux_vector(
     cos_lats = np.cos(np.deg2rad(u[lat]))
     to_theta = (p0 / u[lev]) ** (Rs / Cp)
 
-    Tht = T * to_theta
-    vTht = vT * to_theta
-
-    dTht_dp = Tht.differentiate(lev, edge_order=2)
+    psi = (vT * to_theta) / (T * to_theta).differentiate(lev, edge_order=2)
     du_dp = u.differentiate(lev, edge_order=2)
     ducos_dphi = (180.0 / np.pi) * (u * cos_lats).differentiate(lat, edge_order=2)
 
-    F_lat = a * cos_lats * ((vTht / dTht_dp) * du_dp - uv)
-    F_prs = (
-        a
-        * cos_lats
-        * (
-            ((-vTht / dTht_dp) * (1 / (a * cos_lats)) * ducos_dphi)
-            + (f * vTht / dTht_dp)
-            - uw
-        )
-    )
+    F_lat = a * cos_lats * (psi * du_dp - uv)
+    F_prs = a * cos_lats * (psi * (f - (ducos_dphi/(a*cos_lats))) - uw)
 
-    F_lat.attrs["units"] = "m+3 s-2"  # type: ignore
+    F_lat.attrs["units"] = "m+3 s-2" # type: ignore
     F_prs.attrs["units"] = "Pa m+2 s-2"  # type: ignore
 
     return (F_lat, F_prs)  # type: ignore
@@ -267,13 +256,10 @@ def qg_epflux_vector(
     cos_lats = np.cos(np.deg2rad(T[lat]))
     to_theta = (p0 / T[lev]) ** (Rs / Cp)
 
-    Tht = T * to_theta
-    vTht = vT * to_theta
-
-    dTht_dp = Tht.differentiate(lev, edge_order=2)
+    psi = (vT * to_theta) / (T * to_theta).differentiate(lev, edge_order=2)
 
     F_lat = -a * cos_lats * uv
-    F_prs = a * cos_lats * f * (vTht / dTht_dp)
+    F_prs = a * cos_lats * f * psi
 
     F_lat.attrs["units"] = "m+3 s-2"  # type: ignore
     F_prs.attrs["units"] = "Pa m+2 s-2"  # type: ignore
@@ -310,9 +296,10 @@ def epflux_div(
 
     Returns
     -------
-    epflux_divergence: `xarray.DataArray` or tuple of (`xarray.DataArray`, `xarray.DataArray`)
-        The total EP-Flux divergence or
-        the individual terms from the meridional and vertical divergence (if terms=True)
+    epflux_divergence: `xarray.DataArray` or tuple of (`DataArray`, `DataArray`)
+        The total EP-Flux divergence or a tuple containing the
+        the individual terms from the meridional and vertical
+        divergence (if terms=True)
 
     See Also
     --------
