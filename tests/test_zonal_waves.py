@@ -277,7 +277,7 @@ def test_filter_by_zonal_wave_truncation_fftpkg_fails():
 
     with pytest.raises(ValueError) as e:
         da_filt = filter_by_zonal_wave_truncation(da_fc, [1, 2, 3], fftpkg="foo")
-    assert "Invalid fftpkg: must be" in str(e.value)
+    assert "fftpkg must be 'scipy' or 'xrft'" in str(e.value)
 
 
 def test_zonal_wave_contributions():
