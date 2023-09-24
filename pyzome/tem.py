@@ -181,9 +181,9 @@ def epflux_vector(
     ducos_dphi = (180.0 / np.pi) * (u * cos_lats).differentiate(lat, edge_order=2)
 
     F_lat = a * cos_lats * (psi * du_dp - uv)
-    F_prs = a * cos_lats * (psi * (f - (ducos_dphi/(a*cos_lats))) - uw)
+    F_prs = a * cos_lats * (psi * (f - (ducos_dphi / (a * cos_lats))) - uw)
 
-    F_lat.attrs["units"] = "m+3 s-2" # type: ignore
+    F_lat.attrs["units"] = "m+3 s-2"  # type: ignore
     F_prs.attrs["units"] = "Pa m+2 s-2"  # type: ignore
 
     return (F_lat, F_prs)  # type: ignore

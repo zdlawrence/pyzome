@@ -56,7 +56,14 @@ var_units = {
     },
     "pressure": {"Pa", "Pascals"},
     "temperature": {"K", "degK", "Kelvin"},
-    "prs_vvel": {"Pa s-1", "Pa*s-1", "Pa * s-1", "Pa/s", "Pa / s", "Pascals per second"},
+    "prs_vvel": {
+        "Pa s-1",
+        "Pa*s-1",
+        "Pa * s-1",
+        "Pa/s",
+        "Pa / s",
+        "Pascals per second",
+    },
     "wind": {"m s-1", "m*s-1", "m * s-1", "m/s", "m / s", "meters per second"},
 }
 
@@ -131,7 +138,7 @@ def infer_xr_coord_names(
 
     Returns
     -------
-    coord_names: dict 
+    coord_names: dict
         string keys and values, with the keys being the
         coordinate name category (e.g., lat, lon), and the values being the
         actual coordinate name in the given xarray data. E.g,
@@ -144,7 +151,7 @@ def infer_xr_coord_names(
     dat_coords = list(dat.coords)
     for dc in dat_coords:
         for coord in coord_regex:
-            if coord_regex[coord].match(dc.lower()): # type: ignore
+            if coord_regex[coord].match(dc.lower()):  # type: ignore
                 # Check if more than one coord in dat matches the same pattern
                 if coord in coord_names:
                     msg = (

@@ -262,10 +262,10 @@ def test_create_dummy_geo_field_invalid_arguments():
     lats = lat_coord(10)
 
     with pytest.raises(AttributeError):
-        create_dummy_geo_field(invalid_dataarray, lats) # type: ignore
+        create_dummy_geo_field(invalid_dataarray, lats)  # type: ignore
 
     with pytest.raises(AttributeError):
-        create_dummy_geo_field(lons, invalid_dataarray) # type: ignore
+        create_dummy_geo_field(lons, invalid_dataarray)  # type: ignore
 
 
 def test_create_dummy_geo_dataset():
@@ -310,10 +310,10 @@ def test_create_dummy_geo_dataset_invalid_arguments():
     field_names = ["temp"]
 
     with pytest.raises(AttributeError):
-        create_dummy_geo_dataset(field_names, invalid_dataarray, lats) # type: ignore
+        create_dummy_geo_dataset(field_names, invalid_dataarray, lats)  # type: ignore
 
     with pytest.raises(AttributeError):
-        create_dummy_geo_dataset(field_names, lons, invalid_dataarray) # type: ignore
+        create_dummy_geo_dataset(field_names, lons, invalid_dataarray)  # type: ignore
 
     mismatched_field_attrs = {"temp": {"units": "K"}, "missing_field": {}}
     with pytest.raises(ValueError) as e:

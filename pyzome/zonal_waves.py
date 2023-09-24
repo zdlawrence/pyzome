@@ -170,19 +170,23 @@ def inflate_zonal_wave_coeffs(
         wave_coord = coords["zonal_wavenum"]
 
     if "nlons" not in fc_subset.attrs:
-        msg = "input DataArray must have an 'nlons' attribute specifying " + \
-              "the number of longitudes in the source data"
+        msg = (
+            "input DataArray must have an 'nlons' attribute specifying "
+            + "the number of longitudes in the source data"
+        )
         raise KeyError(msg)
 
     expected_wavenums = np.arange(fc_subset.attrs["nlons"] // 2 + 1)
     if np.array_equiv(fc_subset[wave_coord], expected_wavenums):
         return fc_subset
     elif np.any(~np.in1d(fc_subset[wave_coord], expected_wavenums, assume_unique=True)):
-        msg = "input DataArray wavenumbers are not a subset of the expected " + \
-              "wavenumbers based on the 'nlons' attribute"
+        msg = (
+            "input DataArray wavenumbers are not a subset of the expected "
+            + "wavenumbers based on the 'nlons' attribute"
+        )
         raise ValueError(msg)
 
-    return fc_subset.reindex({wave_coord: expected_wavenums}, fill_value=0j) # type: ignore
+    return fc_subset.reindex({wave_coord: expected_wavenums}, fill_value=0j)  # type: ignore
 
 
 def zonal_wave_ampl_phase(
@@ -221,8 +225,10 @@ def zonal_wave_ampl_phase(
         wave_coord = coords["zonal_wavenum"]
 
     if "nlons" not in fc.attrs:
-        msg = "input DataArray must have an 'nlons' attribute specifying " + \
-              "the number of longitudes in the source data"
+        msg = (
+            "input DataArray must have an 'nlons' attribute specifying "
+            + "the number of longitudes in the source data"
+        )
         raise KeyError(msg)
 
     # where the longitudinal wavenumber is 0, `where' will
@@ -284,13 +290,17 @@ def filter_by_zonal_wave_truncation(
         wave_coord = coords["zonal_wavenum"]
 
     if "nlons" not in fc.attrs:
-        msg = "input DataArray must have an 'nlons' attribute specifying " + \
-              "the number of longitudes in the source data"
+        msg = (
+            "input DataArray must have an 'nlons' attribute specifying "
+            + "the number of longitudes in the source data"
+        )
         raise KeyError(msg)
 
     if "lon0" not in fc.attrs:
-        msg = "input DataArray must have a 'lon0' attribute specifying the " + \
-              "starting longitude of the source data"
+        msg = (
+            "input DataArray must have a 'lon0' attribute specifying the "
+            + "starting longitude of the source data"
+        )
         raise KeyError(msg)
 
     if lons is None:
@@ -308,7 +318,7 @@ def filter_by_zonal_wave_truncation(
 
 
 def _inverse_transform_scipy(fc: xr.DataArray, wave_coord: str, lons: xr.DataArray):
-    r""" Calculates the inverse rFFT of the Zonal Fourier coefficients.
+    r"""Calculates the inverse rFFT of the Zonal Fourier coefficients.
     Uses scipy.fft.irfft to perform the calculation. This function is
     intended to be used internally by filter_by_zonal_wave_truncation.
 
@@ -321,7 +331,7 @@ def _inverse_transform_scipy(fc: xr.DataArray, wave_coord: str, lons: xr.DataArr
         name of the dimension/coordinate corresponding to the wavenumbers
     lons: `xarray.DataArray`
         The longitude coordinate of the original data prior to FFT
-    
+
     """
     scipy_irfft = daskfft.fft_wrap(scipy.fft.irfft, kind="irfft")
     recons = xr.apply_ufunc(
@@ -336,7 +346,7 @@ def _inverse_transform_scipy(fc: xr.DataArray, wave_coord: str, lons: xr.DataArr
 
 
 def _inverse_transform_xrft(fc: xr.DataArray, wave_coord: str, lons: xr.DataArray):
-    r""" Calculates the inverse rFFT of the Zonal Fourier coefficients.
+    r"""Calculates the inverse rFFT of the Zonal Fourier coefficients.
     Uses xrft.ifft to perform the calculation. This function is
     intended to be used internally by filter_by_zonal_wave_truncation.
 
@@ -349,7 +359,7 @@ def _inverse_transform_xrft(fc: xr.DataArray, wave_coord: str, lons: xr.DataArra
         name of the dimension/coordinate corresponding to the wavenumbers
     lons: `xarray.DataArray`
         The longitude coordinate of the original data prior to FFT
-    
+
     """
     recons = xrft.ifft(
         fc,
@@ -359,11 +369,7 @@ def _inverse_transform_xrft(fc: xr.DataArray, wave_coord: str, lons: xr.DataArra
         true_phase=False,
         prefix="",
     )
-    recons = recons.rename(
-        {wave_coord: lons.name}
-    ).assign_coords(
-        {lons.name: lons}
-    )
+    recons = recons.rename({wave_coord: lons.name}).assign_coords({lons.name: lons})
 
     return recons
 
@@ -419,11 +425,13 @@ def zonal_wave_contributions(
         wave_coord = coords["zonal_wavenum"]
 
     contributions = xr.concat(
-        [filter_by_zonal_wave_truncation(
-            fc, [wave], fftpkg=fftpkg, wave_coord=wave_coord, lons=lons
-        )
-        for wave in waves], 
-        dim=wave_coord
+        [
+            filter_by_zonal_wave_truncation(
+                fc, [wave], fftpkg=fftpkg, wave_coord=wave_coord, lons=lons
+            )
+            for wave in waves
+        ],
+        dim=wave_coord,
     ).assign_coords({wave_coord: waves})
 
     return contributions

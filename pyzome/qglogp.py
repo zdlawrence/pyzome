@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import overload
 
 import numpy as np
 import xarray as xr
@@ -15,12 +16,32 @@ from .constants import (
 )
 
 
+@overload
 def add_logp_altitude(
-    dat: xr.Dataset | xr.DataArray,
+    dat: xr.Dataset,
     plev_coord: str = "",
     H: float = SCALE_HEIGHT,
     p0: float = PREF,
-) -> xr.Dataset | xr.DataArray:
+) -> xr.Dataset:
+    ...
+
+
+@overload
+def add_logp_altitude(
+    dat: xr.DataArray,
+    plev_coord: str = "",
+    H: float = SCALE_HEIGHT,
+    p0: float = PREF,
+) -> xr.DataArray:
+    ...
+
+
+def add_logp_altitude(
+    dat,
+    plev_coord: str = "",
+    H: float = SCALE_HEIGHT,
+    p0: float = PREF,
+):
     r"""A convenience function for adding a log-pressure altitude coordinate
     to an xarray Dataset or DataArray
 
@@ -63,7 +84,6 @@ def buoyancy_frequency_squared(
     Rs: float = GAS_CONST_DRY_AIR,
     Cp: float = SPEC_HEAT_DRY_AIR,
     H: float = SCALE_HEIGHT,
-    p0: float = PREF,
 ) -> xr.DataArray:
     r"""Calculates the buoyancy frequency squared given temperature.
 
@@ -80,9 +100,6 @@ def buoyancy_frequency_squared(
     H : float, optional
         The scale height used to calculate the log-pressure altitude.
         Defaults to 7000 m.
-    p0 : float, optional
-        Reference pressure used to calculate the log-pressure altitude.
-        Defaults to 100000 Pa for Earth.
 
     Returns
     -------

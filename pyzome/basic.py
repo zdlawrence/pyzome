@@ -6,6 +6,7 @@ import xarray as xr
 
 from .checks import has_global_regular_lons, infer_xr_coord_names
 
+
 @overload
 def zonal_mean(
     dat: xr.Dataset,
@@ -14,6 +15,7 @@ def zonal_mean(
 ) -> xr.Dataset:
     ...
 
+
 @overload
 def zonal_mean(
     dat: xr.DataArray,
@@ -21,6 +23,7 @@ def zonal_mean(
     strict: bool = False,
 ) -> xr.DataArray:
     ...
+
 
 def zonal_mean(
     dat,
@@ -75,6 +78,7 @@ def meridional_mean(
 ) -> xr.Dataset:
     ...
 
+
 @overload
 def meridional_mean(
     dat: xr.DataArray,
@@ -84,6 +88,7 @@ def meridional_mean(
     strict: bool = False,
 ) -> xr.DataArray:
     ...
+
 
 def meridional_mean(
     dat,
@@ -115,10 +120,10 @@ def meridional_mean(
         The coordinate name of the latitude dimension. If given an empty
         string (the default), the function tries to infer which coordinate
         corresponds to the latitude
-    
+
     strict : bool, optional
         If True, the function will check whether the latitudes on `dat`
-        span `lat1` and `lat2` inclusive. If False (the default), this 
+        span `lat1` and `lat2` inclusive. If False (the default), this
         check is skipped.
 
     Returns

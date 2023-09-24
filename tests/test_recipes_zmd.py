@@ -86,5 +86,5 @@ def test_create_zonal_mean_dataset_fails_no_valid_fields():
     )
 
     with pytest.raises(ValueError) as e:
-        zmds = create_zonal_mean_dataset(ds)
+        _ = create_zonal_mean_dataset(ds)
     assert "No valid fields found in provided dataset" in str(e.value)

@@ -116,15 +116,15 @@ def test_check_SI_units_wrong():
 def test_check_for_logp_coord():
     """Test that check_for_logp_coord properly detects a log-p altitude coordinate"""
     da = create_dummy_geo_field(
-        lon_coord(10), 
-        lat_coord(10), 
+        lon_coord(10),
+        lat_coord(10),
         plev_coord(3, left_lim_exponent=5, right_lim_exponent=2, units="Pa"),
     )
 
-    assert check_for_logp_coord(da) is False 
+    assert check_for_logp_coord(da) is False
     with pytest.raises(CoordinateError) as e:
         check_for_logp_coord(da, enforce=True)
-    assert "z is not a coordinate in the data" in str(e.value) 
+    assert "z is not a coordinate in the data" in str(e.value)
 
     da = da.assign_coords({"z": np.log(da.plev)})
     assert check_for_logp_coord(da) is False
@@ -154,6 +154,3 @@ def test_check_for_logp_coord():
 
     da.z.attrs["units"] = "m"
     assert check_for_logp_coord(da, enforce=True) is True
-
-
-    
