@@ -54,7 +54,11 @@ class PyzomeAccessor:
 
 @xr.register_dataarray_accessor("pzm")
 class PyzomeDataArrayAccessor(PyzomeAccessor):
-    def zonal_wave_coeffs(self, waves, fftpkg="scipy"):
+    def __init__(self, xarray_obj: xr.DataArray):
+        self._obj = xarray_obj
+        self._coord_map = infer_xr_coord_names(xarray_obj)
+
+    def zonal_wave_coeffs(self, waves=None, fftpkg="scipy"):
         return zonal_wave_coeffs(
             self._obj, waves=waves, fftpkg=fftpkg, lon_coord=self.lon.name
         )
@@ -83,4 +87,6 @@ class PyzomeDataArrayAccessor(PyzomeAccessor):
 
 @xr.register_dataset_accessor("pzm")
 class PyzomeDatasetAccessor(PyzomeAccessor):
-    pass
+    def __init__(self, xarray_obj: xr.Dataset):
+        self._obj = xarray_obj
+        self._coord_map = infer_xr_coord_names(xarray_obj)
