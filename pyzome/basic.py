@@ -155,4 +155,5 @@ def meridional_mean(
     ixs = {lat_coord: np.logical_and(lats >= lat1, lats <= lat2)}
     wgts = np.cos(np.deg2rad(dat[lat_coord].isel(ixs)))
 
-    return dat.isel(ixs).weighted(wgts).mean(lat_coord)  # type: ignore
+    with xr.set_options(keep_attrs=True):
+        return dat.isel(ixs).weighted(wgts).mean(lat_coord)  # type: ignore
