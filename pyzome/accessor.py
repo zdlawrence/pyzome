@@ -18,6 +18,25 @@ class PyzomeAccessor:
         self._coord_map = infer_xr_coord_names(xarray_obj)
 
     def coord_map(self, coord: str):
+        r"""Provides the mapping between the pyzome standard coordinate names
+        (lon, lat, plev, zonal_wavenum) and the actual coordinate names in the
+        xarray object.
+
+        Parameters
+        ----------
+        coord : str
+            The pyzome standard coordinate name (lon, lat, plev, zonal_wavenum)
+
+        Returns
+        -------
+        str
+            The actual coordinate name in the xarray object
+
+        Raises
+        ------
+        KeyError
+            If the underlying coordinate name is not found in the xarray object
+        """
         if coord not in self._coord_map:
             raise KeyError(
                 f"pyzome coordinate '{coord}' not identified in original data"
@@ -26,27 +45,52 @@ class PyzomeAccessor:
 
     @property
     def lon(self):
+        r"""The longitude coordinate of the xarray object, if it exists/was identified"""
         return self._obj[self.coord_map("lon")]
 
     @property
     def lat(self):
+        r"""The latitude coordinate of the xarray object, if it exists/was identified"""
         return self._obj[self.coord_map("lat")]
 
     @property
     def plev(self):
+        r"""The pressure level coordinate of the xarray object, if it exists/was identified"""
         return self._obj[self.coord_map("plev")]
 
     @property
     def zonal_wavenum(self):
+        r"""The zonal wavenumber coordinate of the xarray object, if it exists/was identified"""
         return self._obj[self.coord_map("zonal_wavenum")]
 
     def add_logp_altitude(self, H=SCALE_HEIGHT, p0=PREF):
+        r"""Adds a log-pressure altitude coordinate to the xarray object. Requires
+        that the pyzome `plev` coordinatebe identified, and that it be in units of Pa.
+
+        See Also
+        --------
+        pyzome.qglogp.add_logp_altitude
+        """
         return add_logp_altitude(self._obj, plev_coord=self.plev.name, H=H, p0=p0)
 
-    def zonal_mean(self, strict=False):
+    def zonal_mean(self, strict=True):
+        r"""Computes the zonal mean of the xarray object, if a longitude coordinate
+        was identifed.
+
+        See Also
+        --------
+        pyzome.basic.zonal_mean
+        """
         return zonal_mean(self._obj, lon_coord=self.lon.name, strict=strict)
 
-    def meridional_mean(self, lat1, lat2, strict=False):
+    def meridional_mean(self, lat1, lat2, strict=True):
+        r"""Computes the meridional mean of the xarray object, if a latitude coordinate
+        was identifed.
+
+        See Also
+        --------
+        pyzome.basic.meridional_mean
+        """
         return meridional_mean(
             self._obj, lat1, lat2, lat_coord=self.lat.name, strict=strict
         )
@@ -59,14 +103,35 @@ class PyzomeDataArrayAccessor(PyzomeAccessor):
         self._coord_map = infer_xr_coord_names(xarray_obj)
 
     def zonal_wave_coeffs(self, waves=None, fftpkg="scipy"):
+        r"""Computes the zonal wave coefficients of a DataArray, if a longitude
+        coordinate was identifed.
+
+        See Also
+        --------
+        pyzome.zonal_waves.zonal_wave_coeffs
+        """
         return zonal_wave_coeffs(
             self._obj, waves=waves, fftpkg=fftpkg, lon_coord=self.lon.name
         )
 
     def inflate_zonal_wave_coeffs(self):
+        r"""Inflates the zonal wave coefficients of a DataArray to the full
+        spectrum expected for inverse transforms.
+
+        See Also
+        --------
+        pyzome.zonal_waves.inflate_zonal_wave_coeffs
+        """
         return inflate_zonal_wave_coeffs(self._obj, wave_coord=self.zonal_wavenum.name)
 
     def filter_by_zonal_wave_truncation(self, waves, fftpkg="scipy", lons=None):
+        r"""Filters the input DataArray by truncating to include only the specified
+        zonal wavenumbers.
+
+        See Also
+        --------
+        pyzome.zonal_waves.filter_by_zonal_wave_truncation
+        """
         return filter_by_zonal_wave_truncation(
             self._obj,
             waves=waves,
@@ -76,6 +141,13 @@ class PyzomeDataArrayAccessor(PyzomeAccessor):
         )
 
     def zonal_wave_contributions(self, waves, fftpkg="scipy", lons=None):
+        r"""Computes the individual contributions of each given zonal wavenumber
+        to the input DataArray.
+
+        See Also
+        --------
+        pyzome.zonal_waves.zonal_wave_contributions
+        """
         return zonal_wave_contributions(
             self._obj,
             waves=waves,
