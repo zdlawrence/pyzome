@@ -28,7 +28,7 @@ def zonal_mean(
 def zonal_mean(
     dat,
     lon_coord: str = "",
-    strict: bool = False,
+    strict: bool = True,
 ):
     r"""Compute the zonal mean.
 
@@ -47,9 +47,8 @@ def zonal_mean(
         corresponds to the longitude
 
     strict : bool, optional
-        If True, the function will check whether the longitudes span 360
-        degrees with regular spacing. If False (the default), this check is
-        skipped.
+        If True (the default), the function will check whether the longitudes
+        span 360 degrees with regular spacing. If False this check is skipped.
 
     Returns
     -------
@@ -95,7 +94,7 @@ def meridional_mean(
     lat1: float,
     lat2: float,
     lat_coord: str = "",
-    strict: bool = False,
+    strict: bool = True,
 ):
     r"""Compute the cos(lat) weighted mean of data between two latitudes.
 
@@ -122,9 +121,9 @@ def meridional_mean(
         corresponds to the latitude
 
     strict : bool, optional
-        If True, the function will check whether the latitudes on `dat`
-        span `lat1` and `lat2` inclusive. If False (the default), this
-        check is skipped.
+        If True (the default), the function will check whether the latitudes
+        on `dat` span `lat1` and `lat2` inclusive. If False this check is
+        skipped.
 
     Returns
     -------

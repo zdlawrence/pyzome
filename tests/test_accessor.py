@@ -62,7 +62,7 @@ def test_pzm_dataset_accessor():
         ds_zm_mm.pzm.coord_map("lat")
 
     # check that logp altitude coord gets added
-    assert check_for_logp_coord(ds.pzm.add_logp_altitude()) == True
+    assert check_for_logp_coord(ds.pzm.add_logp_altitude())
 
 
 def test_pzm_dataarray_accessor():
@@ -84,7 +84,7 @@ def test_pzm_dataarray_accessor():
         da_zm_mm.pzm.coord_map("lat")
 
     # check that logp altitude coord gets added
-    assert check_for_logp_coord(da_zm_mm.pzm.add_logp_altitude()) == True
+    assert check_for_logp_coord(da_zm_mm.pzm.add_logp_altitude())
 
     # zonal wave coeffs adds zonal_wavenum and removes lon
     fc = da.pzm.zonal_wave_coeffs(waves=[1, 2, 3])
