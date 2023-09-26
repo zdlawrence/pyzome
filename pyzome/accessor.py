@@ -1,3 +1,5 @@
+from typing import Sequence, Optional
+
 import xarray as xr
 
 from .constants import SCALE_HEIGHT, PREF
@@ -13,6 +15,20 @@ from .zonal_waves import (
 
 
 class PyzomeAccessor:
+    r"""Base class for pyzome xarray accessors. Provides the common coordinate
+    mapping functionality for selecting correct xarray coordinate names for
+    use in pyzome functions. The properties and methods of this base class
+    apply to both xarray DataArray and Dataset objects.
+
+    Examples
+    --------
+    >>> import xarray as xr
+    >>> import pyzome as pzm
+    >>> ds = xr.open_dataset("...")
+    >>> ds.pzm.lon
+    >>> ds.pzm.zonal_mean()
+    """
+
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
         self._coord_map = infer_xr_coord_names(xarray_obj)
@@ -63,9 +79,9 @@ class PyzomeAccessor:
         r"""The zonal wavenumber coordinate of the xarray object, if it exists/was identified"""
         return self._obj[self.coord_map("zonal_wavenum")]
 
-    def add_logp_altitude(self, H=SCALE_HEIGHT, p0=PREF):
+    def add_logp_altitude(self, H: float = SCALE_HEIGHT, p0: float = PREF):
         r"""Adds a log-pressure altitude coordinate to the xarray object. Requires
-        that the pyzome `plev` coordinatebe identified, and that it be in units of Pa.
+        that the pyzome `plev` coordinate be identified, and that it be in units of Pa.
 
         See Also
         --------
@@ -73,7 +89,7 @@ class PyzomeAccessor:
         """
         return add_logp_altitude(self._obj, plev_coord=self.plev.name, H=H, p0=p0)
 
-    def zonal_mean(self, strict=True):
+    def zonal_mean(self, strict: bool = True):
         r"""Computes the zonal mean of the xarray object, if a longitude coordinate
         was identifed.
 
@@ -83,7 +99,7 @@ class PyzomeAccessor:
         """
         return zonal_mean(self._obj, lon_coord=self.lon.name, strict=strict)
 
-    def meridional_mean(self, lat1, lat2, strict=True):
+    def meridional_mean(self, lat1: float, lat2: float, strict: bool = True):
         r"""Computes the meridional mean of the xarray object, if a latitude coordinate
         was identifed.
 
@@ -98,11 +114,25 @@ class PyzomeAccessor:
 
 @xr.register_dataarray_accessor("pzm")
 class PyzomeDataArrayAccessor(PyzomeAccessor):
+    r"""xarray DataArray accessor for pyzome functions. Inherits from
+    PyzomeAccessor for maintaining the same coordinate mapping functionality.
+
+    Examples
+    --------
+    >>> import xarray as xr
+    >>> import pyzome as pzm
+    >>> da = xr.open_dataarray("...") # must be a DataArray
+    >>> da.pzm.lon
+    >>> da.pzm.zonal_wave_coeffs().pzm.filter_by_zonal_wave_truncation(waves=[1,2,3])
+    """
+
     def __init__(self, xarray_obj: xr.DataArray):
         self._obj = xarray_obj
         self._coord_map = infer_xr_coord_names(xarray_obj)
 
-    def zonal_wave_coeffs(self, waves=None, fftpkg="scipy"):
+    def zonal_wave_coeffs(
+        self, waves: Optional[Sequence[int]] = None, fftpkg: str = "scipy"
+    ):
         r"""Computes the zonal wave coefficients of a DataArray, if a longitude
         coordinate was identifed.
 
@@ -124,7 +154,12 @@ class PyzomeDataArrayAccessor(PyzomeAccessor):
         """
         return inflate_zonal_wave_coeffs(self._obj, wave_coord=self.zonal_wavenum.name)
 
-    def filter_by_zonal_wave_truncation(self, waves, fftpkg="scipy", lons=None):
+    def filter_by_zonal_wave_truncation(
+        self,
+        waves: Sequence[int],
+        fftpkg: str = "scipy",
+        lons: Optional[xr.DataArray] = None,
+    ):
         r"""Filters the input DataArray by truncating to include only the specified
         zonal wavenumbers.
 
@@ -140,7 +175,12 @@ class PyzomeDataArrayAccessor(PyzomeAccessor):
             lons=lons,
         )
 
-    def zonal_wave_contributions(self, waves, fftpkg="scipy", lons=None):
+    def zonal_wave_contributions(
+        self,
+        waves: Sequence[int],
+        fftpkg: str = "scipy",
+        lons: Optional[xr.DataArray] = None,
+    ):
         r"""Computes the individual contributions of each given zonal wavenumber
         to the input DataArray.
 

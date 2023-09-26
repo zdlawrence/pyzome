@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Iterable
+from typing import Optional, Sequence
 
 import scipy
 import xrft
@@ -16,7 +16,7 @@ from .mock_data import lon_coord
 def zonal_wave_coeffs(
     dat: xr.DataArray,
     *,
-    waves: None | Iterable[int] = None,
+    waves: Optional[Sequence[int]] = None,
     fftpkg: str = "scipy",
     lon_coord: str = "",
 ) -> xr.DataArray:
@@ -251,10 +251,10 @@ def zonal_wave_ampl_phase(
 
 def filter_by_zonal_wave_truncation(
     fc: xr.DataArray,
-    waves: Iterable[int],
+    waves: Sequence[int],
     fftpkg: str = "scipy",
     wave_coord: str = "",
-    lons: None | xr.DataArray = None,
+    lons: Optional[xr.DataArray] = None,
 ) -> xr.DataArray:
     """Filters a field by truncating the zonal wavenumbers. This is done
     by taking an inverse rFFT of the Fourier coefficients, with the unwanted
@@ -376,10 +376,10 @@ def _inverse_transform_xrft(fc: xr.DataArray, wave_coord: str, lons: xr.DataArra
 
 def zonal_wave_contributions(
     fc: xr.DataArray,
-    waves: Iterable[int],
+    waves: Sequence[int],
     fftpkg: str = "scipy",
     wave_coord: str = "",
-    lons: None | xr.DataArray = None,
+    lons: Optional[xr.DataArray] = None,
 ) -> xr.DataArray:
     r"""Computes the individual contributions of each zonal wavenumber
     to the input field. This is done by taking an inverse FFT of the
@@ -441,7 +441,7 @@ def zonal_wave_covariance(
     fc1: xr.DataArray,
     fc2: xr.DataArray,
     wave_coord: str = "",
-    nlons: int | None = None,
+    nlons: Optional[int] = None,
 ) -> xr.DataArray:
     r"""Calculates the covariance of two fields partititioned into
     zonal wavenumbers.
