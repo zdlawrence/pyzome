@@ -366,44 +366,47 @@ def plumb_wave_activity_flux(
     Todo
     -----
     * Unit checks on psip and Nsq (if Nsq is a DataArray)
-    * Add units on output terms
 
     """
 
     check_for_logp_coord(psip, enforce=True)
-    coords = infer_xr_coord_names(psip, required=["plev"])
+    coords = infer_xr_coord_names(psip, required=["lon", "lat", "plev"])
 
-    if ("y" in components) and ("lat" not in coords):
-        msg = "A latitude coordinate must be available"
-        raise ValueError(msg)
-    elif (("x" in components) or ("z" in components)) and ("lon" not in coords):
-        msg = "A longitude coordinate must be available"
-        raise ValueError(msg)
-
+    plev_coord = coords["plev"]
     lat_coord = coords["lat"]
     lon_coord = coords["lon"]
+
     r2d = 180.0 / np.pi
     lats = np.deg2rad(psip[lat_coord])
     cosphi = np.cos(lats)
     f = 2 * Omega * np.sin(lats)
 
-    p = psip[coords["plev"]] / 100000.0
+    p = psip[plev_coord] / 100000.0
 
     waf = []
     dpsi_dlam = r2d * psip.differentiate(lon_coord, edge_order=2)
     if "x" in components:
         d2psi_dlam2 = r2d * dpsi_dlam.differentiate(lon_coord, edge_order=2)
         wafx = (p / (2 * a * a * cosphi)) * ((dpsi_dlam) ** 2 - psip * d2psi_dlam2)
+        wafx.name = "plumb_wafx"
+        wafx.attrs["long_name"] = "Longitude component of Plumb Wave Activity Flux"
+        wafx.attrs["units"] = "m+2 s-2"
         waf.append(wafx)
     if "y" in components:
         dpsi_dphi = r2d * psip.differentiate(lat_coord, edge_order=2)
         d2psi_dphidlam = r2d * dpsi_dphi.differentiate(lon_coord, edge_order=2)
         wafy = (p / (2 * a * a)) * (dpsi_dlam * dpsi_dphi - psip * d2psi_dphidlam)
+        wafy.name = "plumb_wafy"
+        wafy.attrs["long_name"] = "Latitude component of Plumb Wave Activity Flux"
+        wafy.attrs["units"] = "m+2 s-2"
         waf.append(wafy)
     if "z" in components:
         dpsi_dz = psip.differentiate("z", edge_order=2)
         d2psi_dlamdz = dpsi_dlam.differentiate("z", edge_order=2)
         wafz = (p * f * f / (2 * Nsq * a)) * (dpsi_dlam * dpsi_dz - psip * d2psi_dlamdz)
+        wafz.name = "plumb_wafz"
+        wafz.attrs["long_name"] = "Vertical component of Plumb Wave Activity Flux"
+        wafz.attrs["units"] = "m+2 s-2"
         waf.append(wafz)
 
     return waf

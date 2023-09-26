@@ -17,6 +17,7 @@ from pyzome.mock_data import (
     plev_coord,
 )
 from pyzome.constants import SCALE_HEIGHT, PREF
+from pyzome.exceptions import CoordinateError
 
 
 def test_add_logp_altitude():
@@ -126,9 +127,9 @@ def test_plumb_wave_activity_flux_no_lats():
     )
     ds = add_logp_altitude(ds)
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(CoordinateError) as e:
         _ = plumb_wave_activity_flux(ds.psi, ds.N2, components=["y"])
-    assert "A latitude coordinate must be available" in str(e.value)
+    assert "Unable to match any of the coordinates in dat for lat" in str(e.value)
 
 
 def test_plumb_wave_activity_flux_no_lons():
@@ -141,6 +142,6 @@ def test_plumb_wave_activity_flux_no_lons():
     )
     ds = add_logp_altitude(ds)
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(CoordinateError) as e:
         _ = plumb_wave_activity_flux(ds.psi, ds.N2, components=["x", "z"])
-    assert "A longitude coordinate must be available" in str(e.value)
+    assert "Unable to match any of the coordinates in dat for lon" in str(e.value)
