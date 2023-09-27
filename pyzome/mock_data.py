@@ -73,7 +73,7 @@ def lat_coord(
 
     Returns
     -------
-    latitudes: `xarray.DataArray`
+    latitudes: ``xarray.DataArray``
         Regularly spaced latitudes with the given resolution
         (and name/limits, if given)
 
@@ -116,7 +116,7 @@ def lon_coord(
 
     Returns
     -------
-    longitudes: `xarray.DataArray`
+    longitudes: ``xarray.DataArray``
         Regularly spaced longitudes with the given resolution
         (and name/limits, if given)
 
@@ -169,7 +169,7 @@ def plev_coord(
 
     Returns
     -------
-    pressures: `xarray.DataArray`
+    pressures: ``xarray.DataArray``
         Pressure-like coordinate with logarithmic spacing having the given
         number of levels per decade (and name/limits/units, if given)
 
@@ -217,7 +217,7 @@ def time_coord(
 
     Returns
     -------
-    times: `xarray.DataArray`
+    times: ``xarray.DataArray``
         Time-like coordinate with the given start/end dates and frequency
 
     """
@@ -248,13 +248,13 @@ def create_dummy_geo_field(
 
     Parameters
     ----------
-    lons : `xarray.DataArray`
+    lons : ``xarray.DataArray``
         The longitudes of the data. Defaults to None (longitudes excluded)
-    lats : `xarray.DataArray`
+    lats : ``xarray.DataArray``
         The latitudes of the data. Defaults to None (latitudes excluded)
-    levs : `xarray.DataArray`, optional
+    levs : ``xarray.DataArray``, optional
         The vertical levels of the data. Defaults to None (vertical levels excluded)
-    times : `xarray.DataArray`, optional
+    times : ``xarray.DataArray``, optional
         The times of the data. Defaults to None (times excluded)
     name : str, optional
         The name of the data. Defaults to "dummy"
@@ -263,7 +263,7 @@ def create_dummy_geo_field(
 
     Returns
     -------
-    dummy_data: `xarray.DataArray`
+    dummy_data: ``xarray.DataArray``
         Random data with corresponding geophysical coordinates
 
     """
@@ -303,13 +303,13 @@ def create_dummy_geo_dataset(
     ----------
     field_names : list[str]
         The names of the fields
-    lons : `xarray.DataArray`
+    lons : ``xarray.DataArray``
         The longitudes of the data
-    lats : `xarray.DataArray`
+    lats : ``xarray.DataArray``
         The latitudes of the data
-    levs : `xarray.DataArray`, optional
+    levs : ``xarray.DataArray``, optional
         The vertical levels of the data. Defaults to None (vertical levels excluded)
-    times : `xarray.DataArray`, optional
+    times : ``xarray.DataArray``, optional
         The times of the data. Defaults to None (times excluded)
     field_attrs : dict, optional
         The attributes of the data. Defaults to None. If provided, this should be
@@ -318,7 +318,7 @@ def create_dummy_geo_dataset(
 
     Returns
     -------
-    dummy_dataset: `xarray.Dataset`
+    dummy_dataset: ``xarray.Dataset``
         Dataset with fields having random data matching the given geophysical coordinates
 
     """

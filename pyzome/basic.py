@@ -38,7 +38,7 @@ def zonal_mean(
 
     Parameters
     ----------
-    dat : `xarray.DataArray` or `xarray.Dataset`
+    dat : ``xarray.DataArray`` or ``xarray.Dataset``
         data containing a dimension named longitude that spans all 360 degrees
 
     lon_coord : str, optional
@@ -52,7 +52,7 @@ def zonal_mean(
 
     Returns
     -------
-    zonal average: `xarray.DataArray` or `xarray.Dataset`
+    zonal average: ``xarray.DataArray`` or ``xarray.Dataset``
         The mean across the longitude dimension
 
     """
@@ -102,7 +102,7 @@ def meridional_mean(
 
     Parameters
     ----------
-    dat : `xarray.DataArray` or `xarray.Dataset`
+    dat : ``xarray.DataArray`` or ``xarray.Dataset``
         data containing a latitude dimension that spans
         lat1 and lat2. The cos(lat) weighting assumes that the
         latitudes are equally spaced. If given a dataset, the
@@ -127,7 +127,7 @@ def meridional_mean(
 
     Returns
     -------
-    meridional average: `xarray.DataArray` or `xarray.Dataset`
+    meridional average: ``xarray.DataArray`` or ``xarray.Dataset``
         the weighted mean across the latitude dimension limited
         by lat1 and lat2
 

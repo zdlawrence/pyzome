@@ -77,7 +77,7 @@ def has_global_regular_lons(
 
     Parameters
     ----------
-    lons : `xarray.DataArray` or `np.array`
+    lons : ``xarray.DataArray`` or ``np.array``
         data containing the longitudes, in degrees
 
     enforce : bool, optional
@@ -127,7 +127,7 @@ def infer_xr_coord_names(
 
     Parameters
     ----------
-    dat : `xarray.DataArray` or `xr.Dataset`
+    dat : ``xarray.DataArray`` or ``xr.Dataset``
         The data containing the coordinates of lat, lon, plev, etc.
 
     required: List of strings, optional
@@ -184,7 +184,7 @@ def check_var_SI_units(dat: xr.DataArray, var: str, enforce: bool = False) -> bo
 
     Parameters
     ----------
-    dat : `xarray.DataArray`
+    dat : ``xarray.DataArray``
         The data with attributes to check for SI units.
 
     var: string
@@ -225,7 +225,7 @@ def check_for_logp_coord(dat: xr.DataArray | xr.Dataset, enforce: bool = False) 
 
     Parameters
     ----------
-    dat : `xarray.DataArray`
+    dat : ``xarray.DataArray``
         The data to check.
 
     enforce : bool, optional

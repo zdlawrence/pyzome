@@ -27,13 +27,13 @@ def resid_vel(
 
     Parameters
     ----------
-    v : `xarray.DataArray`
+    v : ``xarray.DataArray``
         data containing the zonal mean of the meridional wind
-    w : `xarray.DataArray`
+    w : ``xarray.DataArray``
         data containing the zonal mean of the vertical *pressure* velocity
-    T : `xarray.DataArray`
+    T : ``xarray.DataArray``
         data containing the zonal mean of the air temperature
-    vT : `xarray.DataArray`
+    vT : ``xarray.DataArray``
         data containing the zonal mean meridional eddy heat flux, nominally
         defined as zonal_mean((v - zonal_mean(v))*(T - zonal_mean(T)))
     lat_coord : str, optional
@@ -58,7 +58,7 @@ def resid_vel(
 
     Returns
     -------
-    residual velocities: tuple of two `xarray.DataArray`
+    residual velocities: tuple of two ``xarray.DataArray``
         The meridional and vertical residual velocity components.
 
     Notes
@@ -119,15 +119,15 @@ def epflux_vector(
 
     Parameters
     ----------
-    u : `xarray.DataArray`
+    u : ``xarray.DataArray``
         data containing the zonal mean of the zonal wind
-    T : `xarray.DataArray`
+    T : ``xarray.DataArray``
         data containing the zonal mean of the air temperature
-    uv : `xarray.DataArray`
+    uv : ``xarray.DataArray``
         data containing the zonal mean meridional momentum flux
-    vT : `xarray.DataArray`
+    vT : ``xarray.DataArray``
         data containing the zonal mean meridional heat flux
-    uw : `xarray.DataArray`
+    uw : ``xarray.DataArray``
         data containing the zonal mean vertical momentum flux
         (consistent with w, the vertical pressure velocity field)
     p0 : float, optional
@@ -146,7 +146,7 @@ def epflux_vector(
 
     Returns
     -------
-    ep_flux: tuple of two `xarray.DataArray`
+    ep_flux: tuple of two ``xarray.DataArray``s
         The meridional and vertical components of the EP-Flux (F_lat, F_prs)
 
     Notes
@@ -204,11 +204,11 @@ def qg_epflux_vector(
 
     Parameters
     ----------
-    T : `xarray.DataArray`
+    T : ``xarray.DataArray``
         data containing the full field air temperature
-    uv : `xarray.DataArray`
+    uv : ``xarray.DataArray``
         data containing the zonal mean meridional momentum flux
-    vT : `xarray.DataArray`
+    vT : ``xarray.DataArray``
         data containing the zonal mean meridional heat flux
     p0 : float, optional
         Reference pressure for computation of potential temperature. Defaults
@@ -226,7 +226,7 @@ def qg_epflux_vector(
 
     Returns
     -------
-    qg_ep_flux: tuple of two `xarray.DataArray`
+    qg_ep_flux: tuple of two ``xarray.DataArray``s
         The meridional and vertical components of the quasi-geostrophic EP-Flux
         (F_lat, F_prs).
 
@@ -279,9 +279,9 @@ def epflux_div(
 
     Parameters
     ----------
-    F_lat : `xarray.DataArray`
+    F_lat : ``xarray.DataArray``
         data containing the meridional EP-Flux component
-    F_prs : `xarray.DataArray`
+    F_prs : ``xarray.DataArray``
         data containing the vertical EP-Flux component
     accel : bool, optional
         If True, will scale the output by 1 / (a*cos(lat)) so
@@ -296,7 +296,7 @@ def epflux_div(
 
     Returns
     -------
-    epflux_divergence: `xarray.DataArray` or tuple of (`DataArray`, `DataArray`)
+    epflux_divergence: ``xarray.DataArray`` or tuple of (``DataArray``, ``DataArray``)
         The total EP-Flux divergence or a tuple containing the
         the individual terms from the meridional and vertical
         divergence (if terms=True)

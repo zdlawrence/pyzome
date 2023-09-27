@@ -26,7 +26,7 @@ def zonal_wave_coeffs(
 
     Parameters
     ----------
-    dat : `xarray.DataArray`
+    dat : ``xarray.DataArray``
         input data containing a longitude dimension that spans all 360 degrees
     waves : array-like, optional
         The zonal wavenumbers to maintain in the output. Defaults to None
@@ -44,7 +44,7 @@ def zonal_wave_coeffs(
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
         Output of an rFFT along the longitude dimension, for specified
         waves only. The output is a complex-valued DataArray containing
         at least the `zonal_wavenum` dimension, with attributes `nlons`
@@ -80,14 +80,14 @@ def _zonal_wave_coeffs_scipy(dat: xr.DataArray, lon_coord: str) -> xr.DataArray:
 
     Parameters
     ----------
-    dat : `xarray.DataArray`
+    dat : ``xarray.DataArray``
         data containing a dimension named longitude that spans all 360 degrees
     lon_coord : string
         name of the dimension/coordinate corresponding to the longitudes
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
         Output of the rFFT along the longitude dimension.
 
     """
@@ -112,14 +112,14 @@ def _zonal_wave_coeffs_xrft(dat: xr.DataArray, lon_coord: str) -> xr.DataArray:
 
     Parameters
     ----------
-    dat : `xarray.DataArray`
+    dat : ``xarray.DataArray``
         data containing a dimension named longitude that spans all 360 degrees
     lon_coord : string
         name of the dimension/coordinate corresponding to the longitudes
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
         Output of the rFFT along the longitude dimension.
 
     """
@@ -149,7 +149,7 @@ def inflate_zonal_wave_coeffs(
 
     Parameters
     ----------
-    fc_subset : `xarray.DataArray`
+    fc_subset : ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, as
         returned by `zonal_wave_coeffs`.
     wave_coord : str, optional
@@ -159,7 +159,7 @@ def inflate_zonal_wave_coeffs(
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, with the
         spectrum size determined by the "nlons" attribute of the input
         DataArray.
@@ -199,7 +199,7 @@ def zonal_wave_ampl_phase(
 
     Parameters
     ----------
-    fc : `xarray.DataArray`
+    fc : ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, as
         returned by `zonal_wave_coeffs`.
     phase_deg : boolean, optional
@@ -211,7 +211,7 @@ def zonal_wave_ampl_phase(
 
     Returns
     -------
-    tuple of two `xarray.DataArray`
+    tuple of two ``xarray.DataArray``
         Contains the amplitudes and phases for the input field zonal waves.
 
     See Also
@@ -262,7 +262,7 @@ def filter_by_zonal_wave_truncation(
 
     Parameters
     ----------
-    fc : `xarray.DataArray`
+    fc : ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, as
         returned by `zonal_wave_coeffs`.
     waves : iterable of int or slice
@@ -275,10 +275,15 @@ def filter_by_zonal_wave_truncation(
         The coordinate name of the wavenumber dimension. If given an empty
         string (the default), the function tries to infer which coordinate
         corresponds to the wavenumbers
-    lons: `xarray.DataArray`, optional
+    lons: ``xarray.DataArray``, optional
         The longitude coordinate of the input field. If not given, the
         function will attempt to reconstruct the coordinate from the input
         Fourier coefficients, by looking for 'nlons' and 'lon0' attributes.
+
+    Returns
+    -------
+    ``xarray.DataArray``
+        The field filtered to retain only the given zonal wavenumbers.
 
     """
     if fftpkg not in {"scipy", "xrft"}:
@@ -324,12 +329,12 @@ def _inverse_transform_scipy(fc: xr.DataArray, wave_coord: str, lons: xr.DataArr
 
     Parameters
     ----------
-    fc : `xarray.DataArray`
+    fc : ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, as
         returned by `zonal_wave_coeffs`.
     wave_coord : string
         name of the dimension/coordinate corresponding to the wavenumbers
-    lons: `xarray.DataArray`
+    lons: ``xarray.DataArray``
         The longitude coordinate of the original data prior to FFT
 
     """
@@ -352,12 +357,12 @@ def _inverse_transform_xrft(fc: xr.DataArray, wave_coord: str, lons: xr.DataArra
 
     Parameters
     ----------
-    fc : `xarray.DataArray`
+    fc : ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, as
         returned by `zonal_wave_coeffs`.
     wave_coord : string
         name of the dimension/coordinate corresponding to the wavenumbers
-    lons: `xarray.DataArray`
+    lons: ``xarray.DataArray``
         The longitude coordinate of the original data prior to FFT
 
     """
@@ -387,7 +392,7 @@ def zonal_wave_contributions(
 
     Parameters
     ----------
-    fc : `xarray.DataArray`
+    fc : ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, as
         returned by `zonal_wave_coeffs`.
     waves : iterable of int, optional
@@ -402,14 +407,14 @@ def zonal_wave_contributions(
         The coordinate name of the wavenumber dimension. If given an empty
         string (the default), the function tries to infer which coordinate
         corresponds to the wavenumbers
-    lons: `xarray.DataArray`, optional
+    lons: ``xarray.DataArray``, optional
         The longitude coordinate of the input field. If not given, the
         function will attempt to reconstruct the coordinate from the input
         Fourier coefficients, by looking for 'nlons' and 'lon0' attributes.
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
         The individual contributions of each wavenumber to the original
         input field.
 
@@ -448,12 +453,12 @@ def zonal_wave_covariance(
 
     Parameters
     ----------
-    fc1 : `xarray.DataArray`
+    fc1 : ``xarray.DataArray``
         The zonal Fourier coefficients of the first field, as returned by
-        `zonal_wave_coeffs`.
-    fc2 : `xarray.DataArray`
-        The zonal Fourier coefficients of the second field, as returned by
-        `zonal_wave_coeffs`.
+        ``zonal_wave_coeffs``.
+    fc2 : ``xarray.DataArray``
+        The zonal Fourier c`oefficients of the second field, as returned by
+        ``zonal_wave_coeffs``.
     wave_coord : str optional
         The coordinate name of the wavenumber dimension. If given an empty
         string (the default), the function tries to infer which coordinate
@@ -464,7 +469,7 @@ def zonal_wave_covariance(
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
 
     See Also
     --------

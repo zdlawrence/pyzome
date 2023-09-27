@@ -47,7 +47,7 @@ def add_logp_altitude(
 
     Parameters
     ----------
-    dat : `xarray.Dataset` or `xarray.DataArray`
+    dat : ``xarray.Dataset`` or ``xarray.DataArray``
         data containing a pressure coordinate in SI units (Pa)
     plev_coord : string, optional
         The name of the pressure coordinate in the input data. Defaults
@@ -61,7 +61,7 @@ def add_logp_altitude(
 
     Returns
     -------
-    `xarray.Dataset` or `xarray.DataArray`
+    ``xarray.Dataset`` or ``xarray.DataArray``
         The input data with an added log-pressure altitude coordinate named 'z'
 
     """
@@ -89,7 +89,7 @@ def buoyancy_frequency_squared(
 
     Parameters
     ----------
-    T : `xarray.DataArray`
+    T : ``xarray.DataArray``
         The temperature data in units of Kelvin
     Rs : float, optional
         Specific gas constant. Defaults to 287.058 J/kg/K for dry
@@ -103,7 +103,7 @@ def buoyancy_frequency_squared(
 
     Returns
     -------
-    Nsq: `xarray.DataArray`
+    Nsq: ``xarray.DataArray``
         The buoyancy frequency squared, in units of s-2.
 
     """
@@ -135,7 +135,7 @@ def merid_grad_qgpv(
 
     Parameters
     ----------
-    u : `xarray.DataArray`
+    u : ``xarray.DataArray``
         The zonal mean zonal wind data.
     Nsq : `xarray.DataArray` or float
         The squared buoyancy frequency. Nsq need not have the same dimensions
@@ -167,7 +167,7 @@ def merid_grad_qgpv(
 
     Returns
     -------
-    qgpv_grad: `xarray.DataArray` or tuple of DataArrays
+    qgpv_grad: ``xarray.DataArray`` or tuple of DataArrays
         Depending on the value of the terms keyword argument, either the full
         meridional QGPV gradient field, or a tuple of the individual terms
         that make up the total, in units of s-1.
@@ -235,11 +235,11 @@ def refractive_index(
 
     Parameters
     ----------
-    u : `xarray.DataArray`
+    u : ``xarray.DataArray``
         The zonal mean zonal wind data.
-    q_phi : `xarray.DataArray`
+    q_phi : ``xarray.DataArray``
         The meridional QGPV gradient
-    Nsq : `xarray.DataArray` or float
+    Nsq : ``xarray.DataArray`` or float
         The squared buoyancy frequency. Nsq need not have the same dimensions
         as u, but it should be consistent with u and q_phi in the sense that it
         must be able to be properly broadcasted when used in computations (it is
@@ -279,7 +279,7 @@ def refractive_index(
 
     Returns
     -------
-    RIsq: `xarray.DataArray` or tuple of DataArrays
+    RIsq: ``xarray.DataArray`` or tuple of ``DataArrays``
         Depending on the value of the terms keyword argument, either the full
         squared refractive index field, or a tuple of the individual terms
         that make the total, in units of m-2.
@@ -333,9 +333,9 @@ def plumb_wave_activity_flux(
 
     Parameters
     ----------
-    psip : `xarray.DataArray`
+    psip : ``xarray.DataArray``
         The eddy streamfunction in units of m+2 s-1
-    Nsq : `xarray.DataArray` or float
+    Nsq : ``xarray.DataArray`` or float
         The squared buoyancy frequency. Nsq need not have the same dimensions
         as psip, but it should be consistent with psip in the sense that it
         must be able to be properly broadcasted when used in computations (it is
@@ -359,7 +359,7 @@ def plumb_wave_activity_flux(
 
     Returns
     -------
-    waf: list of `xarray.DataArray`s
+    waf: list of ``xarray.DataArray``s
         The wave activity flux vector components consistent with the
         desired components keyword argument.
 
