@@ -27,13 +27,13 @@ def resid_vel(
 
     Parameters
     ----------
-    v : `xarray.DataArray`
+    v : ``xarray.DataArray``
         data containing the zonal mean of the meridional wind
-    w : `xarray.DataArray`
+    w : ``xarray.DataArray``
         data containing the zonal mean of the vertical *pressure* velocity
-    T : `xarray.DataArray`
+    T : ``xarray.DataArray``
         data containing the zonal mean of the air temperature
-    vT : `xarray.DataArray`
+    vT : ``xarray.DataArray``
         data containing the zonal mean meridional eddy heat flux, nominally
         defined as zonal_mean((v - zonal_mean(v))*(T - zonal_mean(T)))
     lat_coord : str, optional
@@ -58,7 +58,7 @@ def resid_vel(
 
     Returns
     -------
-    residual velocities: tuple of two `xarray.DataArray`
+    residual velocities: tuple of two ``xarray.DataArray``
         The meridional and vertical residual velocity components.
 
     Notes
@@ -74,9 +74,9 @@ def resid_vel(
 
     """
 
-    coords = infer_xr_coord_names(v, required=["lat", "lev"])
+    coords = infer_xr_coord_names(v, required=["lat", "plev"])
     lat = coords["lat"]
-    lev = coords["lev"]
+    lev = coords["plev"]
 
     check_var_SI_units(v[lev], "pressure", enforce=True)
     check_var_SI_units(v, "wind", enforce=True)
@@ -119,15 +119,15 @@ def epflux_vector(
 
     Parameters
     ----------
-    u : `xarray.DataArray`
+    u : ``xarray.DataArray``
         data containing the zonal mean of the zonal wind
-    T : `xarray.DataArray`
+    T : ``xarray.DataArray``
         data containing the zonal mean of the air temperature
-    uv : `xarray.DataArray`
+    uv : ``xarray.DataArray``
         data containing the zonal mean meridional momentum flux
-    vT : `xarray.DataArray`
+    vT : ``xarray.DataArray``
         data containing the zonal mean meridional heat flux
-    uw : `xarray.DataArray`
+    uw : ``xarray.DataArray``
         data containing the zonal mean vertical momentum flux
         (consistent with w, the vertical pressure velocity field)
     p0 : float, optional
@@ -146,7 +146,7 @@ def epflux_vector(
 
     Returns
     -------
-    ep_flux: tuple of two `xarray.DataArray`
+    ep_flux: tuple of two ``xarray.DataArray``
         The meridional and vertical components of the EP-Flux (F_lat, F_prs)
 
     Notes
@@ -162,9 +162,9 @@ def epflux_vector(
 
     """
 
-    coords = infer_xr_coord_names(u, required=["lat", "lev"])
+    coords = infer_xr_coord_names(u, required=["lat", "plev"])
     lat = coords["lat"]
-    lev = coords["lev"]
+    lev = coords["plev"]
 
     check_var_SI_units(u[lev], "pressure", enforce=True)
     check_var_SI_units(T, "temperature", enforce=True)
@@ -176,23 +176,12 @@ def epflux_vector(
     cos_lats = np.cos(np.deg2rad(u[lat]))
     to_theta = (p0 / u[lev]) ** (Rs / Cp)
 
-    Tht = T * to_theta
-    vTht = vT * to_theta
-
-    dTht_dp = Tht.differentiate(lev, edge_order=2)
+    psi = (vT * to_theta) / (T * to_theta).differentiate(lev, edge_order=2)
     du_dp = u.differentiate(lev, edge_order=2)
     ducos_dphi = (180.0 / np.pi) * (u * cos_lats).differentiate(lat, edge_order=2)
 
-    F_lat = a * cos_lats * ((vTht / dTht_dp) * du_dp - uv)
-    F_prs = (
-        a
-        * cos_lats
-        * (
-            ((-vTht / dTht_dp) * (1 / (a * cos_lats)) * ducos_dphi)
-            + (f * vTht / dTht_dp)
-            - uw
-        )
-    )
+    F_lat = a * cos_lats * (psi * du_dp - uv)
+    F_prs = a * cos_lats * (psi * (f - (ducos_dphi / (a * cos_lats))) - uw)
 
     F_lat.attrs["units"] = "m+3 s-2"  # type: ignore
     F_prs.attrs["units"] = "Pa m+2 s-2"  # type: ignore
@@ -215,11 +204,11 @@ def qg_epflux_vector(
 
     Parameters
     ----------
-    T : `xarray.DataArray`
+    T : ``xarray.DataArray``
         data containing the full field air temperature
-    uv : `xarray.DataArray`
+    uv : ``xarray.DataArray``
         data containing the zonal mean meridional momentum flux
-    vT : `xarray.DataArray`
+    vT : ``xarray.DataArray``
         data containing the zonal mean meridional heat flux
     p0 : float, optional
         Reference pressure for computation of potential temperature. Defaults
@@ -237,7 +226,7 @@ def qg_epflux_vector(
 
     Returns
     -------
-    qg_ep_flux: tuple of two `xarray.DataArray`
+    qg_ep_flux: tuple of two ``xarray.DataArray``
         The meridional and vertical components of the quasi-geostrophic EP-Flux
         (F_lat, F_prs).
 
@@ -254,9 +243,9 @@ def qg_epflux_vector(
 
     """
 
-    coords = infer_xr_coord_names(T, required=["lat", "lev"])
+    coords = infer_xr_coord_names(T, required=["lat", "plev"])
     lat = coords["lat"]
-    lev = coords["lev"]
+    lev = coords["plev"]
 
     check_var_SI_units(T[lev], "pressure", enforce=True)
     check_var_SI_units(T, "temperature", enforce=True)
@@ -267,13 +256,10 @@ def qg_epflux_vector(
     cos_lats = np.cos(np.deg2rad(T[lat]))
     to_theta = (p0 / T[lev]) ** (Rs / Cp)
 
-    Tht = T * to_theta
-    vTht = vT * to_theta
-
-    dTht_dp = Tht.differentiate(lev, edge_order=2)
+    psi = (vT * to_theta) / (T * to_theta).differentiate(lev, edge_order=2)
 
     F_lat = -a * cos_lats * uv
-    F_prs = a * cos_lats * f * (vTht / dTht_dp)
+    F_prs = a * cos_lats * f * psi
 
     F_lat.attrs["units"] = "m+3 s-2"  # type: ignore
     F_prs.attrs["units"] = "Pa m+2 s-2"  # type: ignore
@@ -293,9 +279,9 @@ def epflux_div(
 
     Parameters
     ----------
-    F_lat : `xarray.DataArray`
+    F_lat : ``xarray.DataArray``
         data containing the meridional EP-Flux component
-    F_prs : `xarray.DataArray`
+    F_prs : ``xarray.DataArray``
         data containing the vertical EP-Flux component
     accel : bool, optional
         If True, will scale the output by 1 / (a*cos(lat)) so
@@ -310,9 +296,10 @@ def epflux_div(
 
     Returns
     -------
-    epflux_divergence: `xarray.DataArray` or tuple of (`xarray.DataArray`, `xarray.DataArray`)
-        The total EP-Flux divergence or
-        the individual terms from the meridional and vertical divergence (if terms=True)
+    epflux_divergence: ``xarray.DataArray`` or tuple of two ``xr.DataArray``
+        The total EP-Flux divergence or a tuple containing the
+        the individual terms from the meridional and vertical
+        divergence (if terms=True)
 
     See Also
     --------
@@ -325,9 +312,9 @@ def epflux_div(
 
     """
 
-    coords = infer_xr_coord_names(F_lat, required=["lat", "lev"])
+    coords = infer_xr_coord_names(F_lat, required=["lat", "plev"])
     lat = coords["lat"]
-    lev = coords["lev"]
+    lev = coords["plev"]
 
     check_var_SI_units(F_prs[lev], "pressure", enforce=True)
 

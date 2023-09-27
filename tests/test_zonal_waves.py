@@ -73,7 +73,7 @@ def test_zonal_wave_coeffs_unknown_fftpkg():
     """Test that zonal wave coeffs fails with unknown fftpkg"""
     da = create_dummy_geo_field(lon_coord(10), lat_coord(10))
     with pytest.raises(ValueError) as e:
-        da_zonal_wave_coeffs = zonal_wave_coeffs(da, fftpkg="unknown")
+        _ = zonal_wave_coeffs(da, fftpkg="unknown")
     assert "fftpkg must be 'scipy' or 'xrft'" in str(e.value)
 
 
@@ -100,7 +100,7 @@ def test_inflate_zonal_wave_coeffs_missing_nlons():
     _ = da_fc.attrs.pop("nlons")
 
     with pytest.raises(KeyError) as e:
-        da_fc_inflated = inflate_zonal_wave_coeffs(da_fc)
+        _ = inflate_zonal_wave_coeffs(da_fc)
     assert "input DataArray must have an 'nlons' attribute" in str(e.value)
 
 
@@ -122,7 +122,7 @@ def test_inflate_zonal_wave_coeffs_unexpected_wavenums():
     da_fc = da_fc.assign_coords({"zonal_wavenum": [1, 2, 103, 104]})
 
     with pytest.raises(ValueError) as e:
-        da_fc_inflated = inflate_zonal_wave_coeffs(da_fc)
+        _ = inflate_zonal_wave_coeffs(da_fc)
     assert (
         "input DataArray wavenumbers are not a subset of the expected wavenumbers based on the 'nlons' attribute"
         in str(e.value)
@@ -160,7 +160,7 @@ def test_zonal_wave_ampl_phase_missing_nlons():
 
     with pytest.raises(KeyError) as e:
         _ = da_fc.attrs.pop("nlons")
-        ampl, phase = zonal_wave_ampl_phase(da_fc)
+        _, _ = zonal_wave_ampl_phase(da_fc)
     assert "input DataArray must have an 'nlons' attribute" in str(e.value)
 
 
@@ -246,12 +246,12 @@ def test_filter_by_zonal_wave_truncation_no_attrs():
 
     with pytest.raises(KeyError) as e:
         _ = da_fc.attrs.pop("lon0")
-        da_filt = filter_by_zonal_wave_truncation(da_fc, [1, 2, 3])
+        _ = filter_by_zonal_wave_truncation(da_fc, [1, 2, 3])
     assert "input DataArray must have a 'lon0' attribute" in str(e.value)
 
     with pytest.raises(KeyError) as e:
         _ = da_fc.attrs.pop("nlons")
-        da_filt = filter_by_zonal_wave_truncation(da_fc, [1, 2, 3])
+        _ = filter_by_zonal_wave_truncation(da_fc, [1, 2, 3])
     assert "input DataArray must have an 'nlons' attribute" in str(e.value)
 
 
@@ -276,8 +276,8 @@ def test_filter_by_zonal_wave_truncation_fftpkg_fails():
     da_fc = zonal_wave_coeffs(da, fftpkg="scipy")
 
     with pytest.raises(ValueError) as e:
-        da_filt = filter_by_zonal_wave_truncation(da_fc, [1, 2, 3], fftpkg="foo")
-    assert "Invalid fftpkg: must be" in str(e.value)
+        _ = filter_by_zonal_wave_truncation(da_fc, [1, 2, 3], fftpkg="foo")
+    assert "fftpkg must be 'scipy' or 'xrft'" in str(e.value)
 
 
 def test_zonal_wave_contributions():
@@ -353,8 +353,7 @@ def test_zonal_wave_covariance_no_nlons():
     with pytest.raises(ValueError) as e:
         _ = da_fc1.attrs.pop("nlons")
         _ = da_fc2.attrs.pop("nlons")
-
-        zon_cov = zonal_wave_covariance(da_fc1, da_fc2)
+        _ = zonal_wave_covariance(da_fc1, da_fc2)
     assert (
         "nlons must either be provided as a kwarg or be in the attrs of fc1 or fc2"
         in str(e.value)

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import overload
 
 import numpy as np
 import xarray as xr
@@ -15,20 +16,40 @@ from .constants import (
 )
 
 
+@overload
 def add_logp_altitude(
-    dat: xr.Dataset | xr.DataArray,
-    lev_coord: str = "",
+    dat: xr.Dataset,
+    plev_coord: str = "",
     H: float = SCALE_HEIGHT,
     p0: float = PREF,
-) -> xr.Dataset | xr.DataArray:
+) -> xr.Dataset:
+    ...
+
+
+@overload
+def add_logp_altitude(
+    dat: xr.DataArray,
+    plev_coord: str = "",
+    H: float = SCALE_HEIGHT,
+    p0: float = PREF,
+) -> xr.DataArray:
+    ...
+
+
+def add_logp_altitude(
+    dat,
+    plev_coord: str = "",
+    H: float = SCALE_HEIGHT,
+    p0: float = PREF,
+):
     r"""A convenience function for adding a log-pressure altitude coordinate
     to an xarray Dataset or DataArray
 
     Parameters
     ----------
-    dat : `xarray.Dataset` or `xarray.DataArray`
+    dat : ``xarray.Dataset`` or ``xarray.DataArray``
         data containing a pressure coordinate in SI units (Pa)
-    lev_coord : string, optional
+    plev_coord : string, optional
         The name of the pressure coordinate in the input data. Defaults
         to an empty string, for which the function will try to infer the
         pressure coordinate
@@ -40,17 +61,17 @@ def add_logp_altitude(
 
     Returns
     -------
-    `xarray.Dataset` or `xarray.DataArray`
+    ``xarray.Dataset`` or ``xarray.DataArray``
         The input data with an added log-pressure altitude coordinate named 'z'
 
     """
 
-    if lev_coord == "":
-        coords = infer_xr_coord_names(dat, required=["lev"])
-        lev_coord = coords["lev"]
-    check_var_SI_units(dat[lev_coord], "pressure", enforce=True)
+    if plev_coord == "":
+        coords = infer_xr_coord_names(dat, required=["plev"])
+        plev_coord = coords["plev"]
+    check_var_SI_units(dat[plev_coord], "pressure", enforce=True)
 
-    z = -H * np.log(dat[lev_coord] / p0)
+    z = -H * np.log(dat[plev_coord] / p0)
     z.attrs["units"] = "m"  # type: ignore
     z.attrs["long_name"] = "log-pressure altitude"  # type: ignore
     z.attrs["note"] = "added by pyzome"  # type: ignore
@@ -63,13 +84,12 @@ def buoyancy_frequency_squared(
     Rs: float = GAS_CONST_DRY_AIR,
     Cp: float = SPEC_HEAT_DRY_AIR,
     H: float = SCALE_HEIGHT,
-    p0: float = PREF,
 ) -> xr.DataArray:
     r"""Calculates the buoyancy frequency squared given temperature.
 
     Parameters
     ----------
-    T : `xarray.DataArray`
+    T : ``xarray.DataArray``
         The temperature data in units of Kelvin
     Rs : float, optional
         Specific gas constant. Defaults to 287.058 J/kg/K for dry
@@ -80,13 +100,10 @@ def buoyancy_frequency_squared(
     H : float, optional
         The scale height used to calculate the log-pressure altitude.
         Defaults to 7000 m.
-    p0 : float, optional
-        Reference pressure used to calculate the log-pressure altitude.
-        Defaults to 100000 Pa for Earth.
 
     Returns
     -------
-    Nsq: `xarray.DataArray`
+    Nsq: ``xarray.DataArray``
         The buoyancy frequency squared, in units of s-2.
 
     """
@@ -118,9 +135,9 @@ def merid_grad_qgpv(
 
     Parameters
     ----------
-    u : `xarray.DataArray`
+    u : ``xarray.DataArray``
         The zonal mean zonal wind data.
-    Nsq : `xarray.DataArray` or float
+    Nsq : ``xarray.DataArray`` or float
         The squared buoyancy frequency. Nsq need not have the same dimensions
         as u, but it should be consistent with u in the sense that it must be
         able to be properly broadcasted when used in computations with u (it is
@@ -150,7 +167,7 @@ def merid_grad_qgpv(
 
     Returns
     -------
-    qgpv_grad: `xarray.DataArray` or tuple of DataArrays
+    qgpv_grad: ``xarray.DataArray`` or tuple of DataArrays
         Depending on the value of the terms keyword argument, either the full
         meridional QGPV gradient field, or a tuple of the individual terms
         that make up the total, in units of s-1.
@@ -218,11 +235,11 @@ def refractive_index(
 
     Parameters
     ----------
-    u : `xarray.DataArray`
+    u : ``xarray.DataArray``
         The zonal mean zonal wind data.
-    q_phi : `xarray.DataArray`
+    q_phi : ``xarray.DataArray``
         The meridional QGPV gradient
-    Nsq : `xarray.DataArray` or float
+    Nsq : ``xarray.DataArray`` or float
         The squared buoyancy frequency. Nsq need not have the same dimensions
         as u, but it should be consistent with u and q_phi in the sense that it
         must be able to be properly broadcasted when used in computations (it is
@@ -262,7 +279,7 @@ def refractive_index(
 
     Returns
     -------
-    RIsq: `xarray.DataArray` or tuple of DataArrays
+    RIsq: ``xarray.DataArray`` or tuple of 3 DataArrays
         Depending on the value of the terms keyword argument, either the full
         squared refractive index field, or a tuple of the individual terms
         that make the total, in units of m-2.
@@ -316,9 +333,9 @@ def plumb_wave_activity_flux(
 
     Parameters
     ----------
-    psip : `xarray.DataArray`
+    psip : ``xarray.DataArray``
         The eddy streamfunction in units of m+2 s-1
-    Nsq : `xarray.DataArray` or float
+    Nsq : ``xarray.DataArray`` or float
         The squared buoyancy frequency. Nsq need not have the same dimensions
         as psip, but it should be consistent with psip in the sense that it
         must be able to be properly broadcasted when used in computations (it is
@@ -342,51 +359,54 @@ def plumb_wave_activity_flux(
 
     Returns
     -------
-    waf: list of `xarray.DataArray`s
+    waf: list of ``xarray.DataArray``
         The wave activity flux vector components consistent with the
         desired components keyword argument.
 
     Todo
     -----
     * Unit checks on psip and Nsq (if Nsq is a DataArray)
-    * Add units on output terms
 
     """
 
     check_for_logp_coord(psip, enforce=True)
-    coords = infer_xr_coord_names(psip, required=["lev"])
+    coords = infer_xr_coord_names(psip, required=["lon", "lat", "plev"])
 
-    if ("y" in components) and ("lat" not in coords):
-        msg = "A latitude coordinate must be available"
-        raise ValueError(msg)
-    elif (("x" in components) or ("z" in components)) and ("lon" not in coords):
-        msg = "A longitude coordinate must be available"
-        raise ValueError(msg)
-
+    plev_coord = coords["plev"]
     lat_coord = coords["lat"]
     lon_coord = coords["lon"]
+
     r2d = 180.0 / np.pi
     lats = np.deg2rad(psip[lat_coord])
     cosphi = np.cos(lats)
     f = 2 * Omega * np.sin(lats)
 
-    p = psip[coords["lev"]] / 100000.0
+    p = psip[plev_coord] / 100000.0
 
     waf = []
     dpsi_dlam = r2d * psip.differentiate(lon_coord, edge_order=2)
     if "x" in components:
         d2psi_dlam2 = r2d * dpsi_dlam.differentiate(lon_coord, edge_order=2)
         wafx = (p / (2 * a * a * cosphi)) * ((dpsi_dlam) ** 2 - psip * d2psi_dlam2)
+        wafx.name = "plumb_wafx"
+        wafx.attrs["long_name"] = "Longitude component of Plumb Wave Activity Flux"
+        wafx.attrs["units"] = "m+2 s-2"
         waf.append(wafx)
     if "y" in components:
         dpsi_dphi = r2d * psip.differentiate(lat_coord, edge_order=2)
         d2psi_dphidlam = r2d * dpsi_dphi.differentiate(lon_coord, edge_order=2)
         wafy = (p / (2 * a * a)) * (dpsi_dlam * dpsi_dphi - psip * d2psi_dphidlam)
+        wafy.name = "plumb_wafy"
+        wafy.attrs["long_name"] = "Latitude component of Plumb Wave Activity Flux"
+        wafy.attrs["units"] = "m+2 s-2"
         waf.append(wafy)
     if "z" in components:
         dpsi_dz = psip.differentiate("z", edge_order=2)
         d2psi_dlamdz = dpsi_dlam.differentiate("z", edge_order=2)
         wafz = (p * f * f / (2 * Nsq * a)) * (dpsi_dlam * dpsi_dz - psip * d2psi_dlamdz)
+        wafz.name = "plumb_wafz"
+        wafz.attrs["long_name"] = "Vertical component of Plumb Wave Activity Flux"
+        wafz.attrs["units"] = "m+2 s-2"
         waf.append(wafz)
 
     return waf

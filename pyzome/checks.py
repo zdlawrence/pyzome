@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 import re
+from typing import Iterable
 
 import numpy as np
 import xarray as xr
@@ -10,7 +12,7 @@ from .exceptions import LongitudeError, CoordinateError, AttrError, UnitError
 coord_regex = {
     "lon": re.compile("lon[a-z]*"),
     "lat": re.compile("lat[a-z]*"),
-    "lev": re.compile("(p?lev|pre?s|isobaric)[a-z]*"),
+    "plev": re.compile("(p?lev|pre?s|isobaric)[a-z]*"),
     "zonal_wavenum": re.compile("(zonal_wavenum|wavenum_lon|lon_wavenum)[a-z]*"),
 }
 
@@ -54,7 +56,14 @@ var_units = {
     },
     "pressure": {"Pa", "Pascals"},
     "temperature": {"K", "degK", "Kelvin"},
-    "prs_vvel": {"Pa s-1", "Pa*s-1", "Pa * s-1", "Pa/s", "Pa / s", "Pascals per second"},
+    "prs_vvel": {
+        "Pa s-1",
+        "Pa*s-1",
+        "Pa * s-1",
+        "Pa/s",
+        "Pa / s",
+        "Pascals per second",
+    },
     "wind": {"m s-1", "m*s-1", "m * s-1", "m/s", "m / s", "meters per second"},
 }
 
@@ -68,7 +77,7 @@ def has_global_regular_lons(
 
     Parameters
     ----------
-    lons : `xarray.DataArray` or `np.array`
+    lons : ``xarray.DataArray`` or ``np.array``
         data containing the longitudes, in degrees
 
     enforce : bool, optional
@@ -107,8 +116,8 @@ def has_global_regular_lons(
 
 
 def infer_xr_coord_names(
-    dat: xr.DataArray | xr.Dataset, required: list[str] = []
-) -> dict:
+    dat: xr.DataArray | xr.Dataset, required: Iterable[str] = []
+) -> dict[str, str]:
     r"""A convenience function that identifies commonly used coordinate names
     for gridded earth datasets. This function enables other functions in
     pyzome to perform operations across coordinates without the user having
@@ -118,8 +127,8 @@ def infer_xr_coord_names(
 
     Parameters
     ----------
-    dat : `xarray.DataArray` or `xr.Dataset`
-        The data containing the coordinates of lat, lon, lev, etc.
+    dat : ``xarray.DataArray`` or ``xr.Dataset``
+        The data containing the coordinates of lat, lon, plev, etc.
 
     required: List of strings, optional
         If this kwarg is defined, this function will throw errors if it is
@@ -129,7 +138,7 @@ def infer_xr_coord_names(
 
     Returns
     -------
-    coord_names: dict 
+    coord_names: dict
         string keys and values, with the keys being the
         coordinate name category (e.g., lat, lon), and the values being the
         actual coordinate name in the given xarray data. E.g,
@@ -142,7 +151,7 @@ def infer_xr_coord_names(
     dat_coords = list(dat.coords)
     for dc in dat_coords:
         for coord in coord_regex:
-            if coord_regex[coord].match(dc.lower()): # type: ignore
+            if coord_regex[coord].match(dc.lower()):  # type: ignore
                 # Check if more than one coord in dat matches the same pattern
                 if coord in coord_names:
                     msg = (
@@ -175,7 +184,7 @@ def check_var_SI_units(dat: xr.DataArray, var: str, enforce: bool = False) -> bo
 
     Parameters
     ----------
-    dat : `xarray.DataArray`
+    dat : ``xarray.DataArray``
         The data with attributes to check for SI units.
 
     var: string
@@ -209,14 +218,14 @@ def check_var_SI_units(dat: xr.DataArray, var: str, enforce: bool = False) -> bo
     return units_SI
 
 
-def check_for_logp_coord(dat: xr.DataArray, enforce: bool = False) -> bool:
+def check_for_logp_coord(dat: xr.DataArray | xr.Dataset, enforce: bool = False) -> bool:
     r"""A function that checks whether a log-pressure altitude coordinate
     (assumed to be created by pyzome) exists in the given DataArray. Uses
     a combination of units and long_name to check.
 
     Parameters
     ----------
-    dat : `xarray.DataArray`
+    dat : ``xarray.DataArray``
         The data to check.
 
     enforce : bool, optional

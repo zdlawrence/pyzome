@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import warnings
-from typing import Iterable
+from typing import Optional, Sequence
 
-import numpy as np
-import xarray as xr
 import scipy
 import xrft
+import numpy as np
+import xarray as xr
+import dask.array.fft as daskfft
 
 from .checks import has_global_regular_lons, infer_xr_coord_names
 from .mock_data import lon_coord
@@ -15,7 +16,7 @@ from .mock_data import lon_coord
 def zonal_wave_coeffs(
     dat: xr.DataArray,
     *,
-    waves: None | Iterable[int] = None,
+    waves: Optional[Sequence[int]] = None,
     fftpkg: str = "scipy",
     lon_coord: str = "",
 ) -> xr.DataArray:
@@ -25,7 +26,7 @@ def zonal_wave_coeffs(
 
     Parameters
     ----------
-    dat : `xarray.DataArray`
+    dat : ``xarray.DataArray``
         input data containing a longitude dimension that spans all 360 degrees
     waves : array-like, optional
         The zonal wavenumbers to maintain in the output. Defaults to None
@@ -43,7 +44,7 @@ def zonal_wave_coeffs(
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
         Output of an rFFT along the longitude dimension, for specified
         waves only. The output is a complex-valued DataArray containing
         at least the `zonal_wavenum` dimension, with attributes `nlons`
@@ -52,7 +53,7 @@ def zonal_wave_coeffs(
 
     """
 
-    if fftpkg not in ["scipy", "xrft"]:
+    if fftpkg not in {"scipy", "xrft"}:
         msg = "fftpkg must be 'scipy' or 'xrft'"
         raise ValueError(msg)
 
@@ -79,29 +80,27 @@ def _zonal_wave_coeffs_scipy(dat: xr.DataArray, lon_coord: str) -> xr.DataArray:
 
     Parameters
     ----------
-    dat : `xarray.DataArray`
+    dat : ``xarray.DataArray``
         data containing a dimension named longitude that spans all 360 degrees
     lon_coord : string
         name of the dimension/coordinate corresponding to the longitudes
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
         Output of the rFFT along the longitude dimension.
 
     """
     nlons = dat[lon_coord].size
-    lon_ax = dat.get_axis_num(lon_coord)
 
-    new_dims = list(dat.dims)
-    new_dims[lon_ax] = "zonal_wavenum"  # type: ignore
-
-    new_coords = dict(dat.coords)
-    new_coords.pop(lon_coord)
-    new_coords["zonal_wavenum"] = np.arange(0, nlons // 2 + 1)
-
-    fc = scipy.fft.rfft(dat.values, axis=lon_ax)
-    fc = xr.DataArray(fc, coords=new_coords, dims=new_dims)
+    scipy_rfft = daskfft.fft_wrap(scipy.fft.rfft, kind="rfft")
+    fc = xr.apply_ufunc(
+        scipy_rfft,
+        dat.chunk({lon_coord: -1}),
+        input_core_dims=[[lon_coord]],
+        output_core_dims=[["zonal_wavenum"]],
+        dask="allowed",
+    ).assign_coords({"zonal_wavenum": np.arange(0, nlons // 2 + 1)})
 
     return fc
 
@@ -113,14 +112,14 @@ def _zonal_wave_coeffs_xrft(dat: xr.DataArray, lon_coord: str) -> xr.DataArray:
 
     Parameters
     ----------
-    dat : `xarray.DataArray`
+    dat : ``xarray.DataArray``
         data containing a dimension named longitude that spans all 360 degrees
     lon_coord : string
         name of the dimension/coordinate corresponding to the longitudes
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
         Output of the rFFT along the longitude dimension.
 
     """
@@ -150,7 +149,7 @@ def inflate_zonal_wave_coeffs(
 
     Parameters
     ----------
-    fc_subset : `xarray.DataArray`
+    fc_subset : ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, as
         returned by `zonal_wave_coeffs`.
     wave_coord : str, optional
@@ -160,7 +159,7 @@ def inflate_zonal_wave_coeffs(
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, with the
         spectrum size determined by the "nlons" attribute of the input
         DataArray.
@@ -171,14 +170,20 @@ def inflate_zonal_wave_coeffs(
         wave_coord = coords["zonal_wavenum"]
 
     if "nlons" not in fc_subset.attrs:
-        msg = "input DataArray must have an 'nlons' attribute specifying the number of longitudes in the source data"
+        msg = (
+            "input DataArray must have an 'nlons' attribute specifying "
+            + "the number of longitudes in the source data"
+        )
         raise KeyError(msg)
 
     expected_wavenums = np.arange(fc_subset.attrs["nlons"] // 2 + 1)
     if np.array_equiv(fc_subset[wave_coord], expected_wavenums):
         return fc_subset
     elif np.any(~np.in1d(fc_subset[wave_coord], expected_wavenums, assume_unique=True)):
-        msg = "input DataArray wavenumbers are not a subset of the expected wavenumbers based on the 'nlons' attribute"
+        msg = (
+            "input DataArray wavenumbers are not a subset of the expected "
+            + "wavenumbers based on the 'nlons' attribute"
+        )
         raise ValueError(msg)
 
     return fc_subset.reindex({wave_coord: expected_wavenums}, fill_value=0j)  # type: ignore
@@ -194,7 +199,7 @@ def zonal_wave_ampl_phase(
 
     Parameters
     ----------
-    fc : `xarray.DataArray`
+    fc : ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, as
         returned by `zonal_wave_coeffs`.
     phase_deg : boolean, optional
@@ -206,7 +211,7 @@ def zonal_wave_ampl_phase(
 
     Returns
     -------
-    tuple of two `xarray.DataArray`
+    tuple of two ``xarray.DataArray``
         Contains the amplitudes and phases for the input field zonal waves.
 
     See Also
@@ -220,7 +225,10 @@ def zonal_wave_ampl_phase(
         wave_coord = coords["zonal_wavenum"]
 
     if "nlons" not in fc.attrs:
-        msg = "input DataArray must have an 'nlons' attribute specifying the number of longitudes in the source data"
+        msg = (
+            "input DataArray must have an 'nlons' attribute specifying "
+            + "the number of longitudes in the source data"
+        )
         raise KeyError(msg)
 
     # where the longitudinal wavenumber is 0, `where' will
@@ -236,18 +244,17 @@ def zonal_wave_ampl_phase(
 
     with xr.set_options(keep_attrs=True):
         ampl = np.absolute(fc) * mult_mask / fc.nlons
-        # phas = np.angle(fc, deg=phase_deg) # returns a np.ndarray instead of xr.DataArray/Dataset
-        phas = xr.apply_ufunc(np.angle, fc, kwargs={"deg": phase_deg})
+        phas = xr.apply_ufunc(np.angle, fc, kwargs={"deg": phase_deg}, dask="allowed")
 
     return (ampl.astype(fc.dtype), phas.astype(fc.dtype))
 
 
 def filter_by_zonal_wave_truncation(
     fc: xr.DataArray,
-    waves: Iterable[int],
+    waves: Sequence[int],
     fftpkg: str = "scipy",
     wave_coord: str = "",
-    lons: None | xr.DataArray = None,
+    lons: Optional[xr.DataArray] = None,
 ) -> xr.DataArray:
     """Filters a field by truncating the zonal wavenumbers. This is done
     by taking an inverse rFFT of the Fourier coefficients, with the unwanted
@@ -255,7 +262,7 @@ def filter_by_zonal_wave_truncation(
 
     Parameters
     ----------
-    fc : `xarray.DataArray`
+    fc : ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, as
         returned by `zonal_wave_coeffs`.
     waves : iterable of int or slice
@@ -268,25 +275,39 @@ def filter_by_zonal_wave_truncation(
         The coordinate name of the wavenumber dimension. If given an empty
         string (the default), the function tries to infer which coordinate
         corresponds to the wavenumbers
-    lons: `xarray.DataArray`, optional
+    lons: ``xarray.DataArray``, optional
         The longitude coordinate of the input field. If not given, the
         function will attempt to reconstruct the coordinate from the input
         Fourier coefficients, by looking for 'nlons' and 'lon0' attributes.
 
+    Returns
+    -------
+    ``xarray.DataArray``
+        The field filtered to retain only the given zonal wavenumbers.
+
     """
+    if fftpkg not in {"scipy", "xrft"}:
+        msg = "fftpkg must be 'scipy' or 'xrft'"
+        raise ValueError(msg)
+
     if wave_coord == "":
         coords = infer_xr_coord_names(fc, required=["zonal_wavenum"])
         wave_coord = coords["zonal_wavenum"]
 
     if "nlons" not in fc.attrs:
-        msg = "input DataArray must have an 'nlons' attribute specifying the number of longitudes in the source data"
+        msg = (
+            "input DataArray must have an 'nlons' attribute specifying "
+            + "the number of longitudes in the source data"
+        )
         raise KeyError(msg)
 
     if "lon0" not in fc.attrs:
-        msg = "input DataArray must have a 'lon0' attribute specifying the starting longitude of the source data"
+        msg = (
+            "input DataArray must have a 'lon0' attribute specifying the "
+            + "starting longitude of the source data"
+        )
         raise KeyError(msg)
 
-    wavenum_ax = fc.get_axis_num(wave_coord)
     if lons is None:
         warnings.warn("attempting to infer the input longitude coordinate", UserWarning)
         lons = lon_coord(
@@ -295,44 +316,75 @@ def filter_by_zonal_wave_truncation(
             right_lim=fc.attrs["lon0"] + 360.0,
         )
 
-    if fftpkg == "scipy":
-        new_dims = list(fc.dims)
-        new_dims[wavenum_ax] = lons.name  # type: ignore
-        new_coords = dict(fc.coords)
-        new_coords.pop(wave_coord, None)
-        new_coords[lons.name] = lons
+    funcs = {"scipy": _inverse_transform_scipy, "xrft": _inverse_transform_xrft}
+    fc_limited = fc.where(fc[wave_coord].isin(waves), other=0j)
 
-        filtered = scipy.fft.irfft(
-            fc.where(fc[wave_coord].isin(waves), other=0j).values, axis=wavenum_ax
-        )
-        filtered = xr.DataArray(filtered, dims=new_dims, coords=new_coords)
+    return funcs[fftpkg](fc_limited, wave_coord, lons)
 
-    elif fftpkg == "xrft":
-        filtered = xrft.ifft(
-            fc.where(fc[wave_coord].isin(waves), other=0j),
-            dim=wave_coord,
-            real_dim=wave_coord,
-            true_amplitude=False,
-            true_phase=False,
-            prefix="",
-        )
-        filtered = filtered.rename({wave_coord: lons.name}).assign_coords(
-            {lons.name: lons}
-        )
 
-    else:
-        msg = "Invalid fftpkg: must be 'scipy' or 'xrft'"
-        raise ValueError(msg)
+def _inverse_transform_scipy(fc: xr.DataArray, wave_coord: str, lons: xr.DataArray):
+    r"""Calculates the inverse rFFT of the Zonal Fourier coefficients.
+    Uses scipy.fft.irfft to perform the calculation. This function is
+    intended to be used internally by filter_by_zonal_wave_truncation.
 
-    return filtered
+    Parameters
+    ----------
+    fc : ``xarray.DataArray``
+        Fourier coefficients as a function of zonal wavenumber, as
+        returned by `zonal_wave_coeffs`.
+    wave_coord : string
+        name of the dimension/coordinate corresponding to the wavenumbers
+    lons: ``xarray.DataArray``
+        The longitude coordinate of the original data prior to FFT
+
+    """
+    scipy_irfft = daskfft.fft_wrap(scipy.fft.irfft, kind="irfft")
+    recons = xr.apply_ufunc(
+        scipy_irfft,
+        fc.chunk({wave_coord: -1}),
+        input_core_dims=[[wave_coord]],
+        output_core_dims=[[lons.name]],
+        dask="allowed",
+    ).assign_coords({lons.name: lons})
+
+    return recons
+
+
+def _inverse_transform_xrft(fc: xr.DataArray, wave_coord: str, lons: xr.DataArray):
+    r"""Calculates the inverse rFFT of the Zonal Fourier coefficients.
+    Uses xrft.ifft to perform the calculation. This function is
+    intended to be used internally by filter_by_zonal_wave_truncation.
+
+    Parameters
+    ----------
+    fc : ``xarray.DataArray``
+        Fourier coefficients as a function of zonal wavenumber, as
+        returned by `zonal_wave_coeffs`.
+    wave_coord : string
+        name of the dimension/coordinate corresponding to the wavenumbers
+    lons: ``xarray.DataArray``
+        The longitude coordinate of the original data prior to FFT
+
+    """
+    recons = xrft.ifft(
+        fc,
+        dim=wave_coord,
+        real_dim=wave_coord,
+        true_amplitude=False,
+        true_phase=False,
+        prefix="",
+    )
+    recons = recons.rename({wave_coord: lons.name}).assign_coords({lons.name: lons})
+
+    return recons
 
 
 def zonal_wave_contributions(
     fc: xr.DataArray,
-    waves: Iterable[int],
+    waves: Sequence[int],
     fftpkg: str = "scipy",
     wave_coord: str = "",
-    lons: None | xr.DataArray = None,
+    lons: Optional[xr.DataArray] = None,
 ) -> xr.DataArray:
     r"""Computes the individual contributions of each zonal wavenumber
     to the input field. This is done by taking an inverse FFT of the
@@ -340,7 +392,7 @@ def zonal_wave_contributions(
 
     Parameters
     ----------
-    fc : `xarray.DataArray`
+    fc : ``xarray.DataArray``
         Fourier coefficients as a function of zonal wavenumber, as
         returned by `zonal_wave_coeffs`.
     waves : iterable of int, optional
@@ -355,14 +407,14 @@ def zonal_wave_contributions(
         The coordinate name of the wavenumber dimension. If given an empty
         string (the default), the function tries to infer which coordinate
         corresponds to the wavenumbers
-    lons: `xarray.DataArray`, optional
+    lons: ``xarray.DataArray``, optional
         The longitude coordinate of the input field. If not given, the
         function will attempt to reconstruct the coordinate from the input
         Fourier coefficients, by looking for 'nlons' and 'lon0' attributes.
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
         The individual contributions of each wavenumber to the original
         input field.
 
@@ -377,16 +429,15 @@ def zonal_wave_contributions(
         coords = infer_xr_coord_names(fc, required=["zonal_wavenum"])
         wave_coord = coords["zonal_wavenum"]
 
-    contributions = []
-    for wave in waves:
-        contributions.append(
+    contributions = xr.concat(
+        [
             filter_by_zonal_wave_truncation(
                 fc, [wave], fftpkg=fftpkg, wave_coord=wave_coord, lons=lons
             )
-        )
-    contributions = xr.concat(contributions, dim=wave_coord).assign_coords(
-        {wave_coord: waves}
-    )
+            for wave in waves
+        ],
+        dim=wave_coord,
+    ).assign_coords({wave_coord: waves})
 
     return contributions
 
@@ -395,19 +446,19 @@ def zonal_wave_covariance(
     fc1: xr.DataArray,
     fc2: xr.DataArray,
     wave_coord: str = "",
-    nlons: int | None = None,
+    nlons: Optional[int] = None,
 ) -> xr.DataArray:
     r"""Calculates the covariance of two fields partititioned into
     zonal wavenumbers.
 
     Parameters
     ----------
-    fc1 : `xarray.DataArray`
+    fc1 : ``xarray.DataArray``
         The zonal Fourier coefficients of the first field, as returned by
-        `zonal_wave_coeffs`.
-    fc2 : `xarray.DataArray`
-        The zonal Fourier coefficients of the second field, as returned by
-        `zonal_wave_coeffs`.
+        ``zonal_wave_coeffs``.
+    fc2 : ``xarray.DataArray``
+        The zonal Fourier c`oefficients of the second field, as returned by
+        ``zonal_wave_coeffs``.
     wave_coord : str optional
         The coordinate name of the wavenumber dimension. If given an empty
         string (the default), the function tries to infer which coordinate
@@ -418,7 +469,7 @@ def zonal_wave_covariance(
 
     Returns
     -------
-    `xarray.DataArray`
+    ``xarray.DataArray``
 
     See Also
     --------

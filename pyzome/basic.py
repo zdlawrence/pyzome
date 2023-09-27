@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import overload
 
 import numpy as np
 import xarray as xr
@@ -6,11 +7,29 @@ import xarray as xr
 from .checks import has_global_regular_lons, infer_xr_coord_names
 
 
+@overload
 def zonal_mean(
-    dat: xr.DataArray | xr.Dataset,
+    dat: xr.Dataset,
     lon_coord: str = "",
     strict: bool = False,
-) -> xr.DataArray | xr.Dataset:
+) -> xr.Dataset:
+    ...
+
+
+@overload
+def zonal_mean(
+    dat: xr.DataArray,
+    lon_coord: str = "",
+    strict: bool = False,
+) -> xr.DataArray:
+    ...
+
+
+def zonal_mean(
+    dat,
+    lon_coord: str = "",
+    strict: bool = True,
+):
     r"""Compute the zonal mean.
 
     This is primarily a convenience function that will make other
@@ -19,7 +38,7 @@ def zonal_mean(
 
     Parameters
     ----------
-    dat : `xarray.DataArray` or `xarray.Dataset`
+    dat : ``xarray.DataArray`` or ``xarray.Dataset``
         data containing a dimension named longitude that spans all 360 degrees
 
     lon_coord : str, optional
@@ -28,13 +47,12 @@ def zonal_mean(
         corresponds to the longitude
 
     strict : bool, optional
-        If True, the function will check whether the longitudes span 360
-        degrees with regular spacing. If False (the default), this check is
-        skipped.
+        If True (the default), the function will check whether the longitudes
+        span 360 degrees with regular spacing. If False this check is skipped.
 
     Returns
     -------
-    zonal average: `xarray.DataArray` or `xarray.Dataset`
+    zonal average: ``xarray.DataArray`` or ``xarray.Dataset``
         The mean across the longitude dimension
 
     """
@@ -49,19 +67,42 @@ def zonal_mean(
     return dat.mean(lon_coord)
 
 
+@overload
 def meridional_mean(
-    dat: xr.DataArray | xr.Dataset,
+    dat: xr.Dataset,
     lat1: float,
     lat2: float,
     lat_coord: str = "",
-) -> xr.DataArray | xr.Dataset:
+    strict: bool = False,
+) -> xr.Dataset:
+    ...
+
+
+@overload
+def meridional_mean(
+    dat: xr.DataArray,
+    lat1: float,
+    lat2: float,
+    lat_coord: str = "",
+    strict: bool = False,
+) -> xr.DataArray:
+    ...
+
+
+def meridional_mean(
+    dat,
+    lat1: float,
+    lat2: float,
+    lat_coord: str = "",
+    strict: bool = True,
+):
     r"""Compute the cos(lat) weighted mean of data between two latitudes.
 
     This function is imported at the top level of the package by default.
 
     Parameters
     ----------
-    dat : `xarray.DataArray` or `xarray.Dataset`
+    dat : ``xarray.DataArray`` or ``xarray.Dataset``
         data containing a latitude dimension that spans
         lat1 and lat2. The cos(lat) weighting assumes that the
         latitudes are equally spaced. If given a dataset, the
@@ -79,9 +120,14 @@ def meridional_mean(
         string (the default), the function tries to infer which coordinate
         corresponds to the latitude
 
+    strict : bool, optional
+        If True (the default), the function will check whether the latitudes
+        on `dat` span `lat1` and `lat2` inclusive. If False this check is
+        skipped.
+
     Returns
     -------
-    meridional average: `xarray.DataArray` or `xarray.Dataset`
+    meridional average: ``xarray.DataArray`` or ``xarray.Dataset``
         the weighted mean across the latitude dimension limited
         by lat1 and lat2
 
@@ -97,7 +143,7 @@ def meridional_mean(
 
     min_lat = float(dat[lat_coord].min())
     max_lat = float(dat[lat_coord].max())
-    if not ((min_lat <= lat1 <= max_lat) and (min_lat <= lat2 <= max_lat)):
+    if strict and not ((min_lat <= lat1 <= max_lat) and (min_lat <= lat2 <= max_lat)):
         msg = (
             f"data only contains lats in range of {min_lat} to {max_lat} "
             + f"(chose lat1={lat1}, lat2={lat2})"
@@ -108,4 +154,5 @@ def meridional_mean(
     ixs = {lat_coord: np.logical_and(lats >= lat1, lats <= lat2)}
     wgts = np.cos(np.deg2rad(dat[lat_coord].isel(ixs)))
 
-    return dat.isel(ixs).weighted(wgts).mean(lat_coord)  # type: ignore
+    with xr.set_options(keep_attrs=True):
+        return dat.isel(ixs).weighted(wgts).mean(lat_coord)  # type: ignore

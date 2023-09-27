@@ -1,6 +1,7 @@
 from __future__ import annotations
+
 import logging
-from typing import Iterable
+from typing import Optional, Sequence
 
 import xarray as xr
 
@@ -8,7 +9,8 @@ from ..basic import zonal_mean
 from ..zonal_waves import zonal_wave_coeffs, zonal_wave_covariance
 from ..checks import infer_xr_coord_names
 
-logging.basicConfig(level=logging.NOTSET)
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 LONG_NAMES = {
     "u": "zonal mean zonal wind",
@@ -53,9 +55,8 @@ UNITS = {
 
 def create_zonal_mean_dataset(
     ds: xr.Dataset,
-    verbose: bool = False,
     include_waves: bool = False,
-    waves: None | Iterable[int] = None,
+    waves: Optional[Sequence[int]] = None,
     fftpkg: str = "scipy",
     lon_coord: str = "",
 ):
@@ -67,7 +68,7 @@ def create_zonal_mean_dataset(
 
     Parameters
     ----------
-    ds : `xarray.Dataset`
+    ds : ``xarray.Dataset``
         Dataset containing full fields (i.e., containing latitude &
         longitude dimensions) of basic state variables. This function
         currently assumes specific names and units:
@@ -85,9 +86,6 @@ def create_zonal_mean_dataset(
         Note that ds need not contain all of these variables, and this
         function will still provide as many diagnostics as possible.
 
-    verbose : bool, optional
-        Whether to print out progress information as the function proceeds.
-        Defaults to False.
     include_waves : bool, optional
         Whether to include diagnostics as a function of zonal wavenumber such
         as eddy covariances and fourier coefficients. Defaults to False.
@@ -96,30 +94,27 @@ def create_zonal_mean_dataset(
         kwarg is only considered if include_waves is True.
     fftpkg : string, optional
         String that specifies how to perform the FFT on the data. Options are
-        'scipy' or 'xrft'. Specifying scipy uses some operations that are memory-eager
-        and leverages scipy.fft.rfft. Specifying xrft should leverage the benefits
-        of xarray/dask for large datasets by using xrft.fft. Defaults to scipy.
-        This kwarg is only considered if include_waves is True.
+        'scipy' or 'xrft'. Defaults to scipy. This kwarg is only considered
+        if include_waves is True.
 
     Returns
     -------
-    `xarray.Dataset`
+    ``xarray.Dataset``
         An xarray Dataset containing the possible zonal mean diagnostics.
 
     Notes
     -----
+    This function writes progress messages to a module level logger
+
     Please see https://essd.copernicus.org/articles/10/1925/2018/ for
     a description of a different zonal mean dataset compiled for the
-    SPARC Reanalysis Intercomparison Project. This function does *not*
+    SPARC Reanalysis Intercomparison Project. This function does `not`
     provide all the same diagnostics as listed in that publication.
     However, if this function is provided with all of u, v, w, and T,
     it will return all the terms necessary to compute further diagnostics
     for, e.g., zonal Eulerian and Transformed Eulerian Mean momentum budgets.
 
     """
-
-    logger = logging.getLogger("create_zonal_mean_dataset")
-    logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
     if lon_coord == "":
         coords = infer_xr_coord_names(ds, required=["lon"])
@@ -137,6 +132,8 @@ def create_zonal_mean_dataset(
         for v1, v2 in valid_covs
         if v1 in vars_available and v2 in vars_available
     ]
+    logger.info(f" *** Provided with {vars_available}")
+    logger.info(f" *** Will compute {cov_pairs}")
 
     inter = {}
     out_coords = None
@@ -183,12 +180,15 @@ def create_zonal_mean_dataset(
             inter.pop(var)
 
     # add attributes
+    logger.info(" *** Adding DataArray attributes")
     out_vars = inter.keys()
     for var in out_vars:
         inter[var].name = var
         inter[var].attrs["long_name"] = LONG_NAMES[var]
         inter[var].attrs["units"] = UNITS[var]
 
+    # create dataset
+    logger.info(" *** Compiling final dataset")
     out_ds = xr.Dataset(inter, coords=out_coords)
     out_ds.attrs["nlons"] = ds[lon_coord].size
     out_ds.attrs["lon0"] = ds[lon_coord].values[0]

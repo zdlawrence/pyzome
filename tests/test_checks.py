@@ -51,17 +51,16 @@ def test_infer_xr_coord_names():
     """Test that standard coordinates can be inferred/detected"""
 
     da = create_dummy_geo_field(lon_coord(10), lat_coord(10), plev_coord(3))
-    mapper = {"lev": "lev", "lat": "lat", "lon": "lon"}
-    assert infer_xr_coord_names(da, required=["lev", "lat", "lon"]) == mapper
+    mapper = {"plev": "plev", "lat": "lat", "lon": "lon"}
+    assert infer_xr_coord_names(da, required=["plev", "lat", "lon"]) == mapper
 
     da = create_dummy_geo_field(
         lon_coord(10, name="longitude"),
         lat_coord(10, name="latitude"),
         plev_coord(3, name="level"),
     )
-    print(da)
-    mapper = {"lev": "level", "lat": "latitude", "lon": "longitude"}
-    assert infer_xr_coord_names(da, required=["lev", "lat", "lon"]) == mapper
+    mapper = {"plev": "level", "lat": "latitude", "lon": "longitude"}
+    assert infer_xr_coord_names(da, required=["plev", "lat", "lon"]) == mapper
 
 
 def test_infer_multiple_coords_fail():
@@ -117,17 +116,17 @@ def test_check_SI_units_wrong():
 def test_check_for_logp_coord():
     """Test that check_for_logp_coord properly detects a log-p altitude coordinate"""
     da = create_dummy_geo_field(
-        lon_coord(10), 
-        lat_coord(10), 
+        lon_coord(10),
+        lat_coord(10),
         plev_coord(3, left_lim_exponent=5, right_lim_exponent=2, units="Pa"),
     )
 
-    assert check_for_logp_coord(da) is False 
+    assert check_for_logp_coord(da) is False
     with pytest.raises(CoordinateError) as e:
         check_for_logp_coord(da, enforce=True)
-    assert "z is not a coordinate in the data" in str(e.value) 
+    assert "z is not a coordinate in the data" in str(e.value)
 
-    da = da.assign_coords({"z": np.log(da.lev)})
+    da = da.assign_coords({"z": np.log(da.plev)})
     assert check_for_logp_coord(da) is False
     with pytest.raises(AttrError) as e:
         check_for_logp_coord(da, enforce=True)
@@ -155,6 +154,3 @@ def test_check_for_logp_coord():
 
     da.z.attrs["units"] = "m"
     assert check_for_logp_coord(da, enforce=True) is True
-
-
-    
