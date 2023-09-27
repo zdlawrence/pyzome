@@ -146,7 +146,7 @@ def epflux_vector(
 
     Returns
     -------
-    ep_flux: tuple of two ``xarray.DataArray``s
+    ep_flux: tuple of two ``xarray.DataArray``
         The meridional and vertical components of the EP-Flux (F_lat, F_prs)
 
     Notes
@@ -226,7 +226,7 @@ def qg_epflux_vector(
 
     Returns
     -------
-    qg_ep_flux: tuple of two ``xarray.DataArray``s
+    qg_ep_flux: tuple of two ``xarray.DataArray``
         The meridional and vertical components of the quasi-geostrophic EP-Flux
         (F_lat, F_prs).
 
@@ -296,7 +296,7 @@ def epflux_div(
 
     Returns
     -------
-    epflux_divergence: ``xarray.DataArray`` or tuple of (``DataArray``, ``DataArray``)
+    epflux_divergence: ``xarray.DataArray`` or tuple of two ``xr.DataArray``
         The total EP-Flux divergence or a tuple containing the
         the individual terms from the meridional and vertical
         divergence (if terms=True)

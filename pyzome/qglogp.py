@@ -137,7 +137,7 @@ def merid_grad_qgpv(
     ----------
     u : ``xarray.DataArray``
         The zonal mean zonal wind data.
-    Nsq : `xarray.DataArray` or float
+    Nsq : ``xarray.DataArray`` or float
         The squared buoyancy frequency. Nsq need not have the same dimensions
         as u, but it should be consistent with u in the sense that it must be
         able to be properly broadcasted when used in computations with u (it is
@@ -279,7 +279,7 @@ def refractive_index(
 
     Returns
     -------
-    RIsq: ``xarray.DataArray`` or tuple of ``DataArrays``
+    RIsq: ``xarray.DataArray`` or tuple of 3 DataArrays
         Depending on the value of the terms keyword argument, either the full
         squared refractive index field, or a tuple of the individual terms
         that make the total, in units of m-2.
@@ -359,7 +359,7 @@ def plumb_wave_activity_flux(
 
     Returns
     -------
-    waf: list of ``xarray.DataArray``s
+    waf: list of ``xarray.DataArray``
         The wave activity flux vector components consistent with the
         desired components keyword argument.
 
