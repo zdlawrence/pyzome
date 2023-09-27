@@ -13,8 +13,8 @@ quasi-geostrophic diagnostics.
 
 ``pyzome`` is built on top of the ``xarray`` package, 
 and is designed to work with ``xarray`` DataArrays and 
-Datasets. It is generally designed to work with regularly 
-gridded atmospheric data, as is commonly output fro many 
+Datasets. It is primarily intended to work with regularly 
+gridded atmospheric data, as is commonly output from many 
 models and reanalysis datasets. ``pyzome`` leverages coordinate 
 names and attributes to automatically perform operations 
 such as means and derivatives across geophysical dimensions. 
@@ -30,9 +30,9 @@ e.g., ``lon``, ``lons``, or ``longitude``, and ``lat``,
 ``lats`` or ``latitude`` (or other reasonably similar names), 
 and ``pyzome`` will automatically determine the correct dimensions.
 
-For explicit diagnostic calculations, ``pyzome`` expects that 
-quantities are expressed in SI units. This means that data on 
-pressure levels should have their pressures in Pascals 
+For explicit diagnostic calculations, ``pyzome`` currently expects 
+that  quantities are expressed in SI units. This means that, e.g., 
+data on pressure levels should have their pressures in Pascals 
 (with an appropriate coordinate name and units attribute). 
 These assumptions may be relaxed in the future by building 
 on top of other python modules such as `pint <https://pint.readthedocs.io/en/stable/>`_

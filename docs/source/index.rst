@@ -11,10 +11,12 @@ Welcome to pyzome's documentation!
    :maxdepth: 1
    :caption: Contents:
 
+   whats-new
    install
    intro
    basic
    zonal_waves
+   xarray_accessor
    qglogp
    tem
    mock_data 

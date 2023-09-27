@@ -6,9 +6,12 @@ Installation instructions
 Dependencies
 ------------
 
-``pyzome`` currently only requires `numpy <http://www.numpy.org/>`__, 
-`scipy <https://www.scipy.org/>`__, `xarray <http://xarray.pydata.org/en/stable/>`__, 
-and `xrft <https://xrft.readthedocs.io/en/latest/>`__.
+``pyzome`` requires 
+    * `numpy <http://www.numpy.org/>`__
+    * `scipy <https://www.scipy.org/>`__
+    * `xarray <http://xarray.pydata.org/en/stable/>`__
+    * `dask <https://docs.dask.org/en/stable/>`__
+    * `xrft <https://xrft.readthedocs.io/en/latest/>`__
 
 Installation
 ------------

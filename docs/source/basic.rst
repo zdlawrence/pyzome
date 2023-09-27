@@ -11,11 +11,18 @@ convenience, and safety. For instance, while::
 will take the mean over the "lon" dimension regardless of 
 what ``lon`` contains::
 
-   >>> pzm.zonal_mean(ds, strict=True)
+   >>> import pyzome as pzm
+   >>> pzm.zonal_mean(ds)
 
 will infer the dimension name, and check to ensure that the 
 corresponding longitude dimension is regularly spaced and spans 
-a full 360 degrees. 
+a full 360 degrees. The check on the longitudes can be disabled
+by passing ``strict=False`` as a keyword argument.
+
+The functions in this module are also provided as pyzome xarray 
+accessor methods. The above example could also be achieved with:
+
+   >>> ds.pzm.zonal_mean()
 
 Functions
 ---------
